@@ -646,7 +646,7 @@ export const SectionComponentNode = (): JSX.Element => {
                       src="https://c.animaapp.com/ml59rzgj7IZLZ2/img/check-circle.svg"
                     />
                     <div className="[font-family:'Questrial',Helvetica] font-normal text-[#454452] text-sm md:text-base tracking-[0] leading-[normal]">
-                      Email Marketing Campaign
+                      Full Frontend Customization
                     </div>
                   </div>
                 </div>
