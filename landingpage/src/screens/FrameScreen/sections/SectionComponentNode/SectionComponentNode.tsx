@@ -477,14 +477,14 @@ export const SectionComponentNode = (): JSX.Element => {
                       src="https://c.animaapp.com/ml59rzgj7IZLZ2/img/check-circle-37.svg"
                     />
                     <div className="[font-family:'Questrial',Helvetica] font-normal text-[#454452] text-sm md:text-base tracking-[0] leading-[normal]">
-                      Email Marketing Campaign
+                      Theme Customization Request
                     </div>
                   </div>
                 </div>
               </div>
 
-              <button className="mt-auto all-[unset] box-border flex w-full max-w-[259px] mx-auto h-10 gap-2.5 px-[69px] py-[11px] rounded-[69px] border-[1.5px] border-solid border-[#008c09] items-center justify-center transition-all duration-300 hover:bg-[#008c09] hover:text-white active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-green-400">
-                <div className="relative w-fit mt-[-1.00px] [font-family:'Inter',Helvetica] font-bold text-[#008c09] text-sm text-center tracking-[0] leading-[normal] group-hover:text-white">
+              <button className="mt-auto all-[unset] box-border flex w-full max-w-[259px] mx-auto h-10 gap-2.5 px-[69px] py-[11px] rounded-[69px] border-[1.5px] border-solid border-[#f07800] items-center justify-center transition-all duration-300 hover:bg-[#f07800] hover:text-white active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-orange-400">
+                <div className="relative w-fit mt-[-1.00px] [font-family:'Inter',Helvetica] font-bold text-[#f07800] text-sm text-center tracking-[0] leading-[normal] group-hover:text-white">
                   SUBSCRIBE NOW
                 </div>
               </button>
@@ -504,7 +504,7 @@ export const SectionComponentNode = (): JSX.Element => {
                 <div className="flex items-center gap-3 md:gap-[18px]">
                   <div className="relative">
                     <p className="font-normal [font-family:'Poppins',Helvetica] text-[#aeaeae] text-lg md:text-2xl tracking-[0] leading-[normal]">
-                      <span className="font-semibold">৳2500</span>
+                      <span className="font-semibold">৳2000</span>
                     </p>
                     <img
                       className="absolute top-[8px] md:top-[11px] left-0 w-12 md:w-16 h-3 md:h-3.5"
@@ -513,7 +513,7 @@ export const SectionComponentNode = (): JSX.Element => {
                     />
                   </div>
                   <p className="[font-family:'Poppins',Helvetica] font-normal text-transparent text-2xl md:text-[32px] tracking-[0] leading-[normal]">
-                    <span className="font-bold text-[#2f2f2f]">৳1500</span>
+                    <span className="font-bold text-[#2f2f2f]">৳1200</span>
                     <span className="[font-family:'Inter',Helvetica] font-medium text-[#2f2f2f] text-xs md:text-sm">
                       /Month
                     </span>
