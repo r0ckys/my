@@ -1197,34 +1197,28 @@ body {
   font-family: "Inter", Helvetica;
   font-weight: 500;
   color: #002d5a;
-  font-size: clamp(0.75rem, 1.5vw, 0.875rem);
-  text-align: center;
-  letter-spacing: 0;
-  line-height: normal;
-  margin-top: 1rem;
-}
-
 .frame .div-21,
 .frame .div-30,
 .frame .div-34 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
   width: 100%;
   max-width: 78rem;
   margin-top: 3rem;
+  padding: 0 1rem;
 }
-
 .frame .div-22,
 .frame .div-35 {
   width: 100%;
-  min-height: 18rem;
+  min-height: 24rem;
   background-color: #ffffff;
   border-radius: 1.5rem;
-  overflow: hidden;
-  padding: 1.5rem 1.25rem 3rem;
+  overflow: visible;
+  padding: 1.5rem 1.25rem 5rem;
   position: relative;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 }
 
 .frame .div-22:hover,
@@ -2755,4 +2749,54 @@ body {
   .frame .button-5 {
     border: 2px solid currentColor;
   }
+}
+
+/* Additional Layout Fixes */
+.frame .div-23,
+.frame .div-26,
+.frame .div-32,
+.frame .div-36 {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.frame .div-31,
+.frame .group-27,
+.frame .group-29,
+.frame .group-30,
+.frame .group-31,
+.frame .group-32 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+.frame .text-wrapper-48 {
+  text-decoration: none !important;
+}
+
+.frame .check-circle-2,
+.frame .check-circle-3,
+.frame .check-circle-4,
+.frame .check-circle-5,
+.frame .check-circle-6,
+.frame .check-circle-7 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ensure content doesn't overlap with buttons */
+.frame .div-22 > *:not([class*="button"]),
+.frame .div-35 > *:not([class*="button"]) {
+  position: relative;
+  z-index: 1;
 }
