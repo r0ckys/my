@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import { defineConfig, loadEnv, splitVendorChunkPlugin, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -138,6 +139,48 @@ function criticalPreloadPlugin(): Plugin {
       }
 
       return html;
+    }
+  };
+}
+
+/**
+ * Plugin to copy landingpage folder to dist/client during build
+ * This allows the /landingpage path to be served as static files
+ */
+function copyLandingPagePlugin(): Plugin {
+  return {
+    name: 'copy-landingpage',
+    closeBundle() {
+      const srcDir = path.resolve(__dirname, 'landingpage');
+      const destDir = path.resolve(__dirname, 'dist/client/landingpage');
+      
+      // Check if source directory exists
+      if (!fs.existsSync(srcDir)) {
+        console.log('📁 landingpage folder not found, skipping copy');
+        return;
+      }
+      
+      // Recursively copy directory
+      const copyDir = (src: string, dest: string) => {
+        if (!fs.existsSync(dest)) {
+          fs.mkdirSync(dest, { recursive: true });
+        }
+        
+        const entries = fs.readdirSync(src, { withFileTypes: true });
+        for (const entry of entries) {
+          const srcPath = path.join(src, entry.name);
+          const destPath = path.join(dest, entry.name);
+          
+          if (entry.isDirectory()) {
+            copyDir(srcPath, destPath);
+          } else {
+            fs.copyFileSync(srcPath, destPath);
+          }
+        }
+      };
+      
+      copyDir(srcDir, destDir);
+      console.log('📁 Copied landingpage folder to dist/client/landingpage');
     }
   };
 }
@@ -597,7 +640,8 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       plugins: [
         react(),
         splitVendorChunkPlugin(),
-        criticalPreloadPlugin()
+        criticalPreloadPlugin(),
+        copyLandingPagePlugin()
       ],
       // Handle JSON files explicitly
       json: {
