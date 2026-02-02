@@ -25,6 +25,19 @@ module.exports = {
       exec_mode: 'fork',
       watch: false,
       max_memory_restart: '500M'
+    },
+    {
+      name: 'landingpage',
+      script: 'server.js',
+      cwd: '/var/www/html/main-admin/landingpage',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3001
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '500M'
     }
   ]
 };
