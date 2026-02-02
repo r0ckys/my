@@ -29,6 +29,7 @@ interface AdminSidebarProps {
 	onClose?: () => void;
 	userRole?: User['role'];
 	permissions?: PermissionMap;
+	isCollapsed?: boolean;
 }
 
 // Helper to check if user can access a resource
@@ -55,7 +56,7 @@ const canAccess = (resource: string, userRole?: User['role'], permissions?: Perm
 	return false;
 };
 
-export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onNavigate, logo, isOpen, onClose, userRole, permissions }) => {
+export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onNavigate, logo, isOpen, onClose, userRole, permissions, isCollapsed }) => {
 	const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 	const [isProductsOpen, setIsProductsOpen] = useState(activePage === 'products' || activePage === 'product-upload');
 	const desktopScrollRef = useRef<HTMLDivElement>(null);
@@ -143,25 +144,25 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 
 			{/* Sidebar Menu */}
 			<div ref={scrollRef} className="p-3 space-y-0.5 flex-1 overflow-y-auto custom-scrollbar bg-[#0f172a]" style={{ minHeight: 0 }}>
-				<div className="flex items-center gap-2 px-3 mb-6 mt-2">
+				<div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2 px-3'} mb-6 mt-2`}>
 					<div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
 						<Store className="text-white" size={20} />
 					</div>
-					<span className="text-xl font-bold text-white tracking-tight">ShopDashboard</span>
+					{!isCollapsed && <span className="text-xl font-bold text-white tracking-tight">ShopDashboard</span>}
 				</div>
 
 				{/* Main Menu Section */}
-				<div className="text-[11px] font-bold text-slate-500 mb-2 px-3 uppercase tracking-widest">Main Menu</div>
+				{!isCollapsed && <div className="text-[11px] font-bold text-slate-500 mb-2 px-3 uppercase tracking-widest">Main Menu</div>}
 
 				{filteredMainMenuItems.map((item) => (
 					<div
 						key={item.id}
 						onClick={() => handleNavigate(item.id)}
-						className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-xl transition-all duration-200 text-sm font-medium hover:bg-white/5`}
+						className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5'} px-3 py-2 cursor-pointer rounded-xl transition-all duration-200 text-sm font-medium hover:bg-white/5`}
 						style={getMenuItemStyle(item.id, isItemActive(item.id))}
 					>
 						{item.icon}
-						<span>{item.label}</span>
+						{!isCollapsed && <span>{item.label}</span>}
 					</div>
 				))}
 
@@ -175,12 +176,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 						>
 							<div className="flex items-center gap-2.5">
 								<Box size={18} />
-								<span>Products</span>
+								{!isCollapsed && <span>Products</span>}
 							</div>
-							<ChevronDown size={16} className={`transition-transform duration-200 ${isProductsOpen ? 'rotate-180' : ''}`} />
+							<ChevronDown size={16} className={`transition-transform duration-200 ${isProductsOpen ? 'rotate-180' : ''} ${isCollapsed ? 'hidden' : ''}`} />
 						</div>
 
-						{isProductsOpen && (
+						{isProductsOpen && !isCollapsed && (
 							<div className="ml-9 mt-0.5 space-y-0.5">
 								{productsMenuItems.map(item => (
 									<div
@@ -211,12 +212,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 						>
 							<div className="flex items-center gap-2.5">
 								<Layers size={18} />
-								<span>Catalog</span>
+								{!isCollapsed && <span>Catalog</span>}
 							</div>
-							<ChevronDown size={16} className={`transition-transform duration-200 ${isCatalogOpen ? 'rotate-180' : ''}`} />
+							<ChevronDown size={16} className={`transition-transform duration-200 ${isCatalogOpen ? 'rotate-180' : ''} ${isCollapsed ? 'hidden' : ''}`} />
 						</div>
 
-						{isCatalogOpen && (
+						{isCatalogOpen && !isCollapsed && (
 							<div className="ml-9 mt-0.5 space-y-0.5">
 								{catalogItems.map(item => (
 									<div
@@ -240,13 +241,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 				{/* Configuration Section */}
 				{filteredConfigItems.length > 0 && (
 					<>
-						<div className="text-[11px] font-bold text-slate-500 mt-6 mb-2 px-3 uppercase tracking-widest">Configuration</div>
+						{!isCollapsed && <div className="text-[11px] font-bold text-slate-500 mt-6 mb-2 px-3 uppercase tracking-widest">Configuration</div>}
 
 						{filteredConfigItems.map((item) => (
 							<div
 								key={item.id}
 								onClick={() => handleNavigate(item.id)}
-								className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-xl transition-all duration-200 text-sm font-medium hover:bg-white/5`}
+								className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5'} px-3 py-2 cursor-pointer rounded-xl transition-all duration-200 text-sm font-medium hover:bg-white/5`}
 								style={getMenuItemStyle(item.id, isItemActive(item.id))}
 							>
 								{item.icon}
@@ -259,17 +260,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 				{/* System Section */}
 				{filteredSystemItems.length > 0 && (
 					<>
-						<div className="text-[11px] font-bold text-slate-500 mt-6 mb-2 px-3 uppercase tracking-widest">System</div>
+						{!isCollapsed && <div className="text-[11px] font-bold text-slate-500 mt-6 mb-2 px-3 uppercase tracking-widest">System</div>}
 
 						{filteredSystemItems.map((item) => (
 							<div
 								key={item.id}
 								onClick={() => handleNavigate(item.id)}
-								className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-xl transition-all duration-200 text-sm font-medium hover:bg-white/5`}
+								className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5'} px-3 py-2 cursor-pointer rounded-xl transition-all duration-200 text-sm font-medium hover:bg-white/5`}
 								style={getMenuItemStyle(item.id, isItemActive(item.id))}
 							>
 								{item.icon}
-								<span>{item.label}</span>
+								{!isCollapsed && <span>{item.label}</span>}
 							</div>
 						))}
 
@@ -284,7 +285,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 							className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium bg-gradient-to-r from-teal-50 to-emerald-50 text-teal-700 hover:from-teal-100 hover:to-emerald-100 border border-teal-100 shadow-sm mx-1"
 						>
 							<Store size={18} />
-							<span>Back to Store</span>
+							{!isCollapsed && <span>Back to Store</span>}
 						</a>
 					)}
 				</div>
@@ -295,7 +296,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 	return (
 		<>
 			{/* Desktop Sidebar */}
-			<div className="hidden lg:flex w-60 h-screen flex-col sticky top-0 bg-[#0f172a] shadow-xl z-40">
+			<div className={`hidden lg:flex ${isCollapsed ? "w-16" : "w-60"} h-screen flex-col sticky top-0 bg-[#0f172a] shadow-xl z-40 transition-all duration-300`}>
 				<SidebarContent scrollRef={desktopScrollRef} />
 			</div>
 
@@ -313,7 +314,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = memo(({ activePage, onN
 			</div>
 		</>
 	);
-}, (prev, next) => prev.isOpen === next.isOpen); // Only re-render for mobile menu
+}, (prev, next) => prev.isOpen === next.isOpen && prev.isCollapsed === next.isCollapsed); // Only re-render for mobile menu or collapse change
 
 export const AdminHeader: React.FC<{
 	onSwitchView: () => void,

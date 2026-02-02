@@ -184,6 +184,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         onClose={() => setIsSidebarOpen(false)}
         userRole={user?.role}
         permissions={userPermissions}
+        isCollapsed={highlightPage === 'store_studio'}
       />
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
         <AdminHeader

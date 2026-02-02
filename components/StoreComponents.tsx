@@ -29,6 +29,5 @@ export type {
     HeroSectionProps,
     StoreFooterProps,
     ProductQuickViewModalProps,
-    TrackOrderModalProps,
-    AddToCartSuccessModalProps
+    TrackOrderModalProps
 } from './store';

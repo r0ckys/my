@@ -1,6 +1,19 @@
-// PAGE BUILDER MODULE - INDEX EXPORTS
-export { PageBuilder, default } from './PageBuilder';
-export { DraggableSection } from './DraggableSection';
-export { SortableContainer } from './SortableContainer';
-export { WidgetSidebar, DEFAULT_WIDGETS } from './WidgetSidebar';
-export type { WidgetType, DevicePreview, Widget, WidgetConfig, Section, TenantLayout, LayoutMetadata, SaveLayoutPayload, LayoutApiResponse, DraggableSectionProps, SortableContainerProps, WidgetSidebarProps, PageBuilderProps, DragData } from './types';
+/**
+ * STORE STUDIO - PAGE BUILDER MODULE
+ * Drag and drop store layout designer
+ */
+
+export { PageBuilder } from './PageBuilder';
+export { default } from './PageBuilder';
+export { SECTION_CATEGORIES, DEFAULT_LAYOUT, getStyleInfo, getSectionCategory, SECTION_TO_CONFIG_KEY } from './constants';
+export type {
+  StyleVariant,
+  SectionType,
+  DevicePreview,
+  StylePreview,
+  SectionCategory,
+  PlacedSection,
+  StoreLayout,
+  PageBuilderProps,
+  DragData,
+} from './types';
