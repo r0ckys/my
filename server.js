@@ -169,9 +169,7 @@ async function createServer() {
 
   // Serve landingpage folder as static content at /landingpage
   // In production, serve from dist/client/landingpage; in development, serve from source landingpage folder
-  const landingpagePath = isProduction 
-    ? path.resolve(__dirname, 'dist/client/landingpage')
-    : path.resolve(__dirname, 'landingpage');
+  const landingpagePath = path.resolve(__dirname, 'landingpage');
   app.use('/landingpage', express.static(landingpagePath, {
     index: 'index.html',
     setHeaders: (res) => {
