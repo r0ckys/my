@@ -167,6 +167,18 @@ async function createServer() {
     next();
   });
 
+  // Serve landingpage folder as static content at /landingpage
+  // In production, serve from dist/client/landingpage; in development, serve from source landingpage folder
+  const landingpagePath = isProduction 
+    ? path.resolve(__dirname, 'dist/client/landingpage')
+    : path.resolve(__dirname, 'landingpage');
+  app.use('/landingpage', express.static(landingpagePath, {
+    index: 'index.html',
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', `public, max-age=${ONE_DAY}, stale-while-revalidate=${ONE_WEEK}`);
+    }
+  }));
+
   let vite;
   if (!isProduction) {
     // Development: use Vite's dev server as middleware

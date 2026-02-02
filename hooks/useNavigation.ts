@@ -385,6 +385,11 @@ export function useNavigation({ products, user, landingPages, setSelectedLanding
       return;
     }
 
+    // Don't interfere with /landingpage path - this is served as static files
+    if (trimmedPath === 'landingpage' || trimmedPath.startsWith('landingpage/')) {
+      return;
+    }
+
     window.history.replaceState({}, '', '/');
     if (!activeView.startsWith('admin')) {
       setSelectedProduct(null);
@@ -414,6 +419,7 @@ export function useNavigation({ products, user, landingPages, setSelectedLanding
     // Don't reset URL if it's a valid product slug, landing page, or other valid route
     if (path.startsWith('p/')) return; // Landing page
     if (path.startsWith('offer/')) return; // Offer page (legacy)
+    if (path === 'landingpage' || path.startsWith('landingpage/')) return; // Static landingpage folder
     if (/^[a-z0-9-]+$/i.test(path) && !['admin', 'register', 'checkout', 'cart', 'wishlist', 'profile', 'orders', 'tracking'].includes(path)) return; // Root-level landing page slug
     if (path.startsWith('product-details/')) return; // Product detail page
     if (path === 'all-products') return; // All products page
