@@ -575,6 +575,7 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
             devicePreview={devicePreview}
             onSelectSection={(id) => { setSelectedSectionId(id); setSelectedBlockId(null); }}
           />
+        </DndContext>
 
           {/* Right Sidebar - Settings Panel */}
           <aside className="w-72 bg-white border-l flex flex-col h-full">
@@ -634,7 +635,6 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
               </div>
             )}
           </aside>
-        </DndContext>
       </div>
 
       {/* Modals */}
