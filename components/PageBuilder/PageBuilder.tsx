@@ -175,7 +175,8 @@ const StorePreview: React.FC<{ sections: PlacedSection[]; selectedSectionId: str
       case 'flash-sale':
         return <div className={`${baseClass} py-6 sm:py-8 px-4 sm:px-6 bg-gradient-to-r from-red-500 to-orange-500`}><div className="flex items-center justify-between mb-4"><h2 className="text-lg sm:text-xl font-bold text-white">{section.settings.title}</h2>{section.settings.showCountdown && <div className="text-white text-xs sm:text-sm">⏰ 23:59:59</div>}</div><div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">{[1,2,3,4].map(i => <div key={i} className="bg-white rounded-lg p-2 sm:p-3"><div className="bg-gray-100 aspect-square rounded mb-2" /><div className="h-2 sm:h-3 bg-gray-100 rounded w-3/4 mb-1" /><div className="h-2 sm:h-3 bg-gray-100 rounded w-1/2" /></div>)}</div></div>;
       case 'product-grid':
-        return <div className={`${baseClass} py-6 sm:py-8 px-4 sm:px-6`}><h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">{section.settings.heading}</h2><div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(section.settings.columns, 2)}, 1fr)` }}>{Array(section.settings.productsToShow > 8 ? 8 : section.settings.productsToShow).fill(0).map((_, i) => <div key={i} className="bg-gray-50 rounded-lg p-2 sm:p-3"><div className="bg-gray-100 aspect-square rounded mb-2" /><div className="h-2 sm:h-3 bg-gray-100 rounded w-3/4 mb-1" /><div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2" /></div>)}</div></div>;
+        const responsiveColumns = window.innerWidth < 640 ? Math.min(section.settings.columns, 2) : section.settings.columns;
+        return <div className={`${baseClass} py-6 sm:py-8 px-4 sm:px-6`}><h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">{section.settings.heading}</h2><div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: `repeat(${responsiveColumns}, 1fr)` }}>{Array(section.settings.productsToShow > 8 ? 8 : section.settings.productsToShow).fill(0).map((_, i) => <div key={i} className="bg-gray-50 rounded-lg p-2 sm:p-3"><div className="bg-gray-100 aspect-square rounded mb-2" /><div className="h-2 sm:h-3 bg-gray-100 rounded w-3/4 mb-1" /><div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2" /></div>)}</div></div>;
       case 'brands':
         return <div className={`${baseClass} py-6 sm:py-8 px-4 sm:px-6`}><h2 className="text-base sm:text-lg font-bold text-center mb-4 sm:mb-6">{section.settings.title}</h2><div className="flex justify-center gap-4 sm:gap-8 overflow-x-auto">{[1,2,3,4,5,6].map(i => <div key={i} className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs flex-shrink-0">Brand {i}</div>)}</div></div>;
       case 'newsletter':
@@ -721,8 +722,11 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
             devicePreview={devicePreview}
             onSelectSection={(id) => { 
               setSelectedSectionId(id); 
-              setSelectedBlockId(null); 
-              setIsRightSidebarOpen(true); // Auto-open settings on mobile when selecting
+              setSelectedBlockId(null);
+              // Auto-open settings panel on mobile/tablet for better UX
+              if (window.innerWidth < 1024) {
+                setIsRightSidebarOpen(true);
+              }
             }}
           />
         </DndContext>
@@ -738,7 +742,7 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
         
         <aside className={`
           fixed lg:static inset-y-0 right-0 z-50
-          w-full sm:w-80 lg:w-72 bg-white border-l flex flex-col h-full
+          w-full sm:w-96 lg:w-80 xl:w-96 bg-white border-l flex flex-col h-full
           transform transition-transform duration-200 ease-in-out
           ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
           top-14 lg:top-0
