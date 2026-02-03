@@ -6,6 +6,7 @@ import {
 import toast from 'react-hot-toast';
 import { StoreStudioConfig, Product } from '../../types';
 import { DataService } from '../../services/DataService';
+import ProductOrderManager from './ProductOrderManager';
 
 interface StoreStudioManagerProps {
   tenantId: string;
@@ -119,6 +120,34 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
       setConfig(config);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Save product order
+  const handleSaveProductOrder = async (order: number[]) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/product_display_order`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productDisplayOrder: order }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save product order');
+      }
+
+      // Update local config
+      setConfig(prev => ({
+        ...prev,
+        productDisplayOrder: order,
+        updatedAt: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('Failed to save product order:', error);
+      throw error;
     }
   };
 
@@ -357,16 +386,12 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
         {/* Product Order Tab */}
         {activeTab === 'products' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-center py-12">
-              <Grid className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Product Order Manager</h3>
-              <p className="text-gray-600 mb-4">
-                Drag and drop products to rearrange their display order in your store.
-              </p>
-              <p className="text-sm text-gray-500">
-                Product count: {products?.length || 0}
-              </p>
-            </div>
+            <ProductOrderManager
+              tenantId={tenantId}
+              products={products}
+              currentOrder={config.productDisplayOrder}
+              onSave={handleSaveProductOrder}
+            />
           </div>
         )}
       </div>
