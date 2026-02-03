@@ -398,11 +398,11 @@ const SectionSettings: React.FC<{ section: PlacedSection; onUpdate: (settings: R
   const sectionRef = useRef(section);
   const onUpdateRef = useRef(onUpdate);
   
-  // Keep refs updated
+  // Keep refs updated - runs when section or onUpdate changes
   useEffect(() => {
     sectionRef.current = section;
     onUpdateRef.current = onUpdate;
-  });
+  }, [section, onUpdate]);
   
   // Stable callback that doesn't change between renders
   const handleFieldChange = useCallback((name: string, value: any) => {
