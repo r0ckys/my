@@ -4,6 +4,10 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
+import { uploadPreparedImageToServer } from '../../services/imageUploadService';
+
+// Constants
+const BROKEN_IMAGE_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EBroken Image%3C/text%3E%3C/svg%3E';
 
 // Types
 type SectionType = 'announcement-bar' | 'header' | 'hero' | 'featured-collection' | 'rich-text' | 'image-with-text' | 'image-banner' | 'slideshow' | 'video' | 'newsletter' | 'collection-list' | 'product-grid' | 'testimonials' | 'contact-form' | 'map' | 'multicolumn' | 'collapsible-content' | 'custom-html' | 'footer' | 'featured-product' | 'blog-posts' | 'brand-list' | 'flash-sale' | 'categories' | 'brands' | 'tags-products';
@@ -238,8 +242,6 @@ const SettingsField: React.FC<{
     
     setUploading(true);
     try {
-      // Import the upload function dynamically
-      const { uploadPreparedImageToServer } = await import('../../services/imageUploadService');
       const imageUrl = await uploadPreparedImageToServer(file, tenantId, 'gallery');
       handleChange(imageUrl);
       toast.success('Image uploaded successfully');
@@ -264,7 +266,7 @@ const SettingsField: React.FC<{
                 alt={label} 
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EBroken Image%3C/text%3E%3C/svg%3E';
+                  (e.target as HTMLImageElement).src = BROKEN_IMAGE_PLACEHOLDER;
                 }}
               />
               <button
