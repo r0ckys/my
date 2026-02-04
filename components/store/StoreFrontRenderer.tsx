@@ -476,6 +476,200 @@ export const StoreFrontRenderer: React.FC<StoreFrontRendererProps> = ({
           </section>
         );
 
+      case 'image-banner':
+        return (
+          <section key={key} className="w-full">
+            {settings?.imageUrl ? (
+              <div className="relative" style={{ minHeight: settings?.height === 'large' ? '500px' : settings?.height === 'small' ? '200px' : '350px' }}>
+                <img 
+                  src={settings.imageUrl} 
+                  alt={settings?.heading || 'Banner'} 
+                  className="w-full h-full object-cover absolute inset-0"
+                />
+                {(settings?.heading || settings?.subheading || settings?.buttonText) && (
+                  <div 
+                    className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-4"
+                    style={{ backgroundColor: `rgba(0,0,0,${(settings?.overlayOpacity || 30) / 100})` }}
+                  >
+                    {settings?.heading && <h2 className="text-3xl md:text-5xl font-bold mb-4">{settings.heading}</h2>}
+                    {settings?.subheading && <p className="text-lg md:text-xl mb-6 max-w-2xl">{settings.subheading}</p>}
+                    {settings?.buttonText && (
+                      <a href={settings?.buttonLink || '#'} className="px-8 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition">
+                        {settings.buttonText}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-gray-200 py-20 text-center">
+                <p className="text-gray-400">Image banner - Add an image URL</p>
+              </div>
+            )}
+          </section>
+        );
+
+      case 'video':
+        const getYoutubeId = (url: string) => {
+          const match = url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+          return match ? match[1] : null;
+        };
+        const youtubeId = settings?.videoUrl ? getYoutubeId(settings.videoUrl) : null;
+        return (
+          <section key={key} className="max-w-[1408px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {settings?.heading && <h2 className="text-2xl font-bold text-center mb-6">{settings.heading}</h2>}
+            <div className="relative" style={{ paddingBottom: settings?.aspectRatio === '4:3' ? '75%' : '56.25%' }}>
+              {youtubeId ? (
+                <iframe
+                  className="absolute inset-0 w-full h-full rounded-lg"
+                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${settings?.autoplay ? 1 : 0}&mute=${settings?.muted ? 1 : 0}&loop=${settings?.loop ? 1 : 0}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : settings?.videoUrl ? (
+                <video
+                  className="absolute inset-0 w-full h-full rounded-lg object-cover"
+                  src={settings.videoUrl}
+                  autoPlay={settings?.autoplay}
+                  muted={settings?.muted}
+                  loop={settings?.loop}
+                  controls
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-400">Video - Add a video URL</p>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case 'map':
+        return (
+          <section key={key} className="max-w-[1408px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {settings?.heading && <h2 className="text-2xl font-bold text-center mb-6">{settings.heading}</h2>}
+            {settings?.address ? (
+              <div className="rounded-lg overflow-hidden" style={{ height: settings?.mapHeight || 400 }}>
+                <iframe
+                  className="w-full h-full border-0"
+                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${encodeURIComponent(settings.address)}`}
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="bg-gray-200 rounded-lg flex items-center justify-center" style={{ height: settings?.mapHeight || 400 }}>
+                <p className="text-gray-400">Map - Add an address</p>
+              </div>
+            )}
+          </section>
+        );
+
+      case 'slideshow':
+        const slides = settings?.slides || [];
+        return (
+          <section key={key} className="w-full relative overflow-hidden" style={{ minHeight: '400px' }}>
+            {slides.length > 0 ? (
+              <div className="relative h-full">
+                {slides.map((slide: any, idx: number) => (
+                  <div key={idx} className={`${idx === 0 ? 'block' : 'hidden'}`}>
+                    <img src={slide.imageUrl} alt={slide.heading || `Slide ${idx + 1}`} className="w-full h-96 object-cover" />
+                    {(slide.heading || slide.subheading) && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center bg-black/30">
+                        {slide.heading && <h2 className="text-3xl font-bold mb-2">{slide.heading}</h2>}
+                        {slide.subheading && <p className="text-lg">{slide.subheading}</p>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-gray-200 h-96 flex items-center justify-center">
+                <p className="text-gray-400">Slideshow - Add slides</p>
+              </div>
+            )}
+          </section>
+        );
+
+      case 'multicolumn':
+        const columnContent = settings?.columnContent || [];
+        const numColumns = settings?.columns || 3;
+        return (
+          <section key={key} className="max-w-[1408px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {settings?.heading && <h2 className="text-2xl font-bold text-center mb-8">{settings.heading}</h2>}
+            <div className={`grid grid-cols-1 md:grid-cols-${numColumns} gap-6`}>
+              {columnContent.length > 0 ? columnContent.map((col: any, idx: number) => (
+                <div key={idx} className="text-center p-4">
+                  {col.imageUrl && <img src={col.imageUrl} alt={col.heading || ''} className="w-16 h-16 mx-auto mb-4 object-cover rounded-full" />}
+                  {col.heading && <h3 className="font-semibold mb-2">{col.heading}</h3>}
+                  {col.text && <p className="text-gray-600 text-sm">{col.text}</p>}
+                </div>
+              )) : (
+                Array.from({ length: numColumns }).map((_, idx) => (
+                  <div key={idx} className="bg-gray-100 rounded-lg p-8 text-center">
+                    <p className="text-gray-400">Column {idx + 1}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        );
+
+      case 'collapsible-content':
+        const faqItems = settings?.items || [];
+        return (
+          <section key={key} className="max-w-[1408px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {settings?.heading && <h2 className="text-2xl font-bold text-center mb-8">{settings.heading}</h2>}
+            <div className="max-w-3xl mx-auto space-y-3">
+              {faqItems.length > 0 ? faqItems.map((item: any, idx: number) => (
+                <details key={idx} className="border border-gray-200 rounded-lg" open={settings?.openFirst && idx === 0}>
+                  <summary className="p-4 cursor-pointer font-medium hover:bg-gray-50">{item.question || `Question ${idx + 1}`}</summary>
+                  <div className="p-4 pt-0 text-gray-600">{item.answer || 'Answer...'}</div>
+                </details>
+              )) : (
+                <div className="bg-gray-100 rounded-lg p-8 text-center">
+                  <p className="text-gray-400">Add FAQ items</p>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+
+      case 'contact-form':
+        return (
+          <section key={key} className="max-w-[1408px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-2xl mx-auto text-center">
+              {settings?.heading && <h2 className="text-2xl font-bold mb-2">{settings.heading}</h2>}
+              {settings?.subheading && <p className="text-gray-600 mb-8">{settings.subheading}</p>}
+              <form className="space-y-4 text-left">
+                <input type="text" placeholder="Your Name" className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
+                <input type="email" placeholder="Your Email" className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
+                <textarea placeholder="Your Message" rows={4} className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
+                <button type="submit" className="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+                  Send Message
+                </button>
+              </form>
+            </div>
+          </section>
+        );
+
+      case 'custom-html':
+        return (
+          <section key={key} className="max-w-[1408px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {settings?.html ? (
+              <div dangerouslySetInnerHTML={{ __html: settings.html }} />
+            ) : (
+              <div className="bg-gray-100 rounded-lg p-8 text-center">
+                <p className="text-gray-400">Custom HTML - Add HTML code</p>
+              </div>
+            )}
+          </section>
+        );
+
+      case 'header':
+        // Header is typically handled by StoreHeader component, skip here
+        return null;
+
       case 'footer':
         return (
           <Suspense key={key} fallback={<SectionSkeleton />}>

@@ -195,7 +195,9 @@ tenantDataRouter.get('/:tenantId/store_studio_config', async (req, res, next) =>
       updatedAt: new Date().toISOString()
     };
     
-    res.json({ data: config || defaultConfig });
+    // Check for null, undefined, or empty object
+    const hasValidConfig = config && typeof config === 'object' && Object.keys(config).length > 0;
+    res.json({ data: hasValidConfig ? config : defaultConfig });
   } catch (error) {
     console.error(`[TenantData] Error fetching store_studio_config:`, error);
     return res.status(500).json({ 

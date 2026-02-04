@@ -710,7 +710,7 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <header className="h-14 bg-white border-b flex items-center justify-between px-2 sm:px-4 flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-4">

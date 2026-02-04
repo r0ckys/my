@@ -308,7 +308,7 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={activeTab === 'layout' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}>
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -395,7 +395,7 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
 
         {/* Layout Builder Tab */}
         {activeTab === 'layout' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="h-[calc(100vh-120px)]">
             <Suspense 
               fallback={
                 <div className="flex items-center justify-center p-12">
