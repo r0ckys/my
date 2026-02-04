@@ -54,6 +54,12 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
             productDisplayOrder: [],
             updatedAt: new Date().toISOString()
           });
+        } else {
+          // Handle non-OK responses
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.message || errorData.error || 'Failed to load store studio configuration';
+          console.error('Failed to fetch store studio config:', errorMessage);
+          toast.error(errorMessage);
         }
       } catch (error) {
         console.error('Failed to fetch store studio config:', error);
@@ -82,11 +88,14 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
       if (response.ok) {
         toast.success('Store studio configuration saved successfully!');
       } else {
-        throw new Error('Failed to save configuration');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || 'Failed to save configuration';
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Failed to save store studio config:', error);
-      toast.error('Failed to save configuration');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save configuration';
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -123,11 +132,14 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
         toast.success(`Store Studio ${newConfig.enabled ? 'enabled' : 'disabled'}!`);
         configBeforeToggleRef.current = null; // Clear rollback ref on success
       } else {
-        throw new Error('Failed to save configuration');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || 'Failed to save configuration';
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Failed to toggle store studio:', error);
-      toast.error('Failed to update configuration');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update configuration';
+      toast.error(errorMessage);
       // Revert to the previous config stored in ref
       if (configBeforeToggleRef.current) {
         setConfig(configBeforeToggleRef.current);
