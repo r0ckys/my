@@ -264,7 +264,10 @@ tenantDataRouter.get('/:tenantId/store_studio_config', async (req, res, next) =>
     res.json({ data: config || defaultConfig });
   } catch (error) {
     console.error(`[TenantData] Error fetching store_studio_config:`, error);
-    next(error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch store studio configuration',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -322,7 +325,10 @@ tenantDataRouter.put('/:tenantId/store_studio_config', async (req, res, next) =>
     res.json({ data: config, success: true });
   } catch (error) {
     console.error(`[TenantData] Error updating store_studio_config:`, error);
-    next(error);
+    return res.status(500).json({ 
+      error: 'Failed to update store studio configuration',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -389,6 +395,9 @@ tenantDataRouter.put('/:tenantId/product_display_order', async (req, res, next) 
     res.json({ data: existingConfig, success: true });
   } catch (error) {
     console.error(`[TenantData] Error updating product_display_order:`, error);
-    next(error);
+    return res.status(500).json({ 
+      error: 'Failed to update product display order',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
