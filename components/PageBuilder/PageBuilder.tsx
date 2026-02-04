@@ -496,6 +496,7 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
 
   const [componentSearchQuery, setComponentSearchQuery] = useState<string>('');
   const [sidebarTab, setSidebarTab] = useState<'components' | 'sections'>('components');
+  const [themeStyles, setThemeStyles] = useState<Record<string, string>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const selectedSection = sections.find(s => s.id === selectedSectionId);
   const selectedBlock = selectedSection?.blocks.find(b => b.id === selectedBlockId);
@@ -533,6 +534,10 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
     
     if (tenantId) {
       fetchLayout();
+      // Also fetch theme customization
+      fetch(`/api/tenant-data/${tenantId}/store_customization`).then(r => r.ok ? r.json() : { data: {} }).then(d => {
+        if (d.data) setThemeStyles(d.data);
+      }).catch(console.error);
     }
   }, [tenantId]);
 
@@ -586,6 +591,25 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
     }
     
     setIsSaving(false);
+  };
+
+  const handleSelectThemeStyle = async (configKey: string, styleValue: string) => {
+    setThemeStyles(prev => ({ ...prev, [configKey]: styleValue }));
+    try {
+      const res = await fetch(`/api/tenant-data/${tenantId}/store_customization`);
+      const existing = res.ok ? await res.json() : { data: {} };
+      const updated = { ...existing.data, [configKey]: styleValue };
+      const saveRes = await fetch(`/api/tenant-data/${tenantId}/store_customization`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: updated })
+      });
+      if (saveRes.ok) {
+        toast.success(`${configKey.replace(/Style$/, '').replace(/([A-Z])/g, ' $1').trim()} updated to ${styleValue}`);
+      }
+    } catch (e) {
+      console.error('[PageBuilder] Failed to save theme style:', e);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -885,6 +909,8 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
                 onAddSection={handleAddSectionFromLibrary}
                 searchQuery={componentSearchQuery}
                 onSearchChange={setComponentSearchQuery}
+                onSelectStyle={handleSelectThemeStyle}
+                currentStyles={themeStyles}
               />
             )}
 
