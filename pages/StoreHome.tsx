@@ -160,51 +160,57 @@ const StoreHome: React.FC<StoreHomeProps> = ({
   const [useCustomLayout, setUseCustomLayout] = useState(false);
   const [customLayoutLoading, setCustomLayoutLoading] = useState(true);
 
+  // Shared function to check and update custom layout state
+  const checkAndUpdateCustomLayout = useCallback(async (logPrefix = '') => {
+    if (!tenantId) return;
+    
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      // Check both store studio config and layout in parallel
+      const [configRes, layoutRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
+        fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
+      ]);
+      
+      // Only use custom layout if store studio is enabled AND layout exists
+      if (configRes.ok && layoutRes.ok) {
+        const [configResult, layoutResult] = await Promise.all([
+          configRes.json(),
+          layoutRes.json()
+        ]);
+        
+        const isStoreStudioEnabled = configResult.data?.enabled || false;
+        const hasCustomLayout = layoutResult.data?.sections?.length > 0;
+        
+        if (isStoreStudioEnabled && hasCustomLayout) {
+          setUseCustomLayout(true);
+          console.log(`[StoreHome]${logPrefix} Using custom layout from Store Studio`);
+        } else {
+          setUseCustomLayout(false);
+          if (!isStoreStudioEnabled) {
+            console.log(`[StoreHome]${logPrefix} Store Studio is disabled, using default layout`);
+          } else {
+            console.log(`[StoreHome]${logPrefix} No custom layout, using default`);
+          }
+        }
+      }
+    } catch (e) {
+      console.log(`[StoreHome]${logPrefix} Error checking layout, using default:`, e);
+    }
+  }, [tenantId]);
+
   // Check if tenant has store studio enabled and a custom layout saved
   useEffect(() => {
-    const checkCustomLayout = async () => {
+    const initCustomLayout = async () => {
       if (!tenantId) {
         setCustomLayoutLoading(false);
         return;
       }
-      try {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-        // Check both store studio config and layout in parallel
-        const [configRes, layoutRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
-          fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
-        ]);
-        
-        // Only use custom layout if store studio is enabled AND layout exists
-        if (configRes.ok && layoutRes.ok) {
-          const [configResult, layoutResult] = await Promise.all([
-            configRes.json(),
-            layoutRes.json()
-          ]);
-          
-          const isStoreStudioEnabled = configResult.data?.enabled || false;
-          const hasCustomLayout = layoutResult.data?.sections?.length > 0;
-          
-          if (isStoreStudioEnabled && hasCustomLayout) {
-            setUseCustomLayout(true);
-            console.log("[StoreHome] Using custom layout from Store Studio");
-          } else {
-            // Explicitly set to false when Store Studio is disabled or no layout exists
-            setUseCustomLayout(false);
-            if (!isStoreStudioEnabled) {
-              console.log("[StoreHome] Store Studio is disabled, using default layout");
-            } else {
-              console.log("[StoreHome] No custom layout, using default");
-            }
-          }
-        }
-      } catch (e) {
-        console.log("[StoreHome] Error checking layout, using default:", e);
-      }
+      await checkAndUpdateCustomLayout();
       setCustomLayoutLoading(false);
     };
-    checkCustomLayout();
-  }, [tenantId]);
+    initCustomLayout();
+  }, [tenantId, checkAndUpdateCustomLayout]);
 
   // Listen for real-time updates to store_studio_config
   useEffect(() => {
@@ -217,47 +223,12 @@ const StoreHome: React.FC<StoreHomeProps> = ({
       // Refetch when store studio settings or layout changes
       if (key === 'store_studio_config' || key === 'store_layout') {
         console.log('[StoreHome] Detected update to', key, '- refetching...');
-        
-        const refetchConfigAndLayout = async () => {
-          try {
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-            const [configRes, layoutRes] = await Promise.all([
-              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
-              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
-            ]);
-            
-            if (configRes.ok && layoutRes.ok) {
-              const [configResult, layoutResult] = await Promise.all([
-                configRes.json(),
-                layoutRes.json()
-              ]);
-              
-              const isStoreStudioEnabled = configResult.data?.enabled || false;
-              const hasCustomLayout = layoutResult.data?.sections?.length > 0;
-              
-              if (isStoreStudioEnabled && hasCustomLayout) {
-                setUseCustomLayout(true);
-                console.log("[StoreHome] Using custom layout from Store Studio (live update)");
-              } else {
-                setUseCustomLayout(false);
-                if (!isStoreStudioEnabled) {
-                  console.log("[StoreHome] Store Studio is disabled (live update)");
-                } else {
-                  console.log("[StoreHome] No custom layout (live update)");
-                }
-              }
-            }
-          } catch (e) {
-            console.log("[StoreHome] Error refetching layout:", e);
-          }
-        };
-
-        refetchConfigAndLayout();
+        checkAndUpdateCustomLayout(' (live update)');
       }
     });
 
     return () => unsubscribe();
-  }, [tenantId]);
+  }, [tenantId, checkAndUpdateCustomLayout]);
 
   // === HANDLERS ===
   const selectInstantVariant = useCallback((product: Product): ProductVariantSelection => ({

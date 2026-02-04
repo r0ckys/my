@@ -176,49 +176,59 @@ export const StoreFrontRenderer: React.FC<StoreFrontRendererProps> = ({
     };
   }, [orderedProducts]);
 
-  // Fetch store studio config and layout from backend
+  // Shared function to fetch and update store studio config and layout
+  const fetchAndUpdateConfigAndLayout = useCallback(async () => {
+    if (!tenantId) return;
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      // Fetch both store studio config and layout in parallel
+      const [configResponse, layoutResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
+        fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
+      ]);
+
+      // Check if store studio is enabled
+      if (configResponse.ok) {
+        const configResult = await configResponse.json();
+        const isEnabled = configResult.data?.enabled || false;
+        const displayOrder = configResult.data?.productDisplayOrder || [];
+        
+        setStoreStudioEnabled(isEnabled);
+        setProductDisplayOrder(displayOrder);
+        
+        // Only use custom layout if store studio is enabled
+        if (isEnabled && layoutResponse.ok) {
+          const layoutResult = await layoutResponse.json();
+          if (layoutResult.data?.sections?.length > 0) {
+            setLayout(layoutResult.data);
+          } else {
+            setLayout(null);
+          }
+        } else {
+          setLayout(null);
+        }
+      }
+    } catch (e) {
+      console.warn('[StoreFrontRenderer] Error fetching config/layout:', e);
+      setError('Failed to load configuration');
+    }
+  }, [tenantId]);
+
+  // Fetch store studio config and layout from backend on mount
   useEffect(() => {
-    const fetchLayoutAndConfig = async () => {
+    const initLayoutAndConfig = async () => {
       if (!tenantId) {
         setIsLoading(false);
         return;
       }
 
-      try {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-        // Fetch both store studio config and layout in parallel
-        const [configResponse, layoutResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
-          fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
-        ]);
-
-        // Check if store studio is enabled
-        if (configResponse.ok) {
-          const configResult = await configResponse.json();
-          const isEnabled = configResult.data?.enabled || false;
-          const displayOrder = configResult.data?.productDisplayOrder || [];
-          
-          setStoreStudioEnabled(isEnabled);
-          setProductDisplayOrder(displayOrder);
-          
-          // Only use custom layout if store studio is enabled
-          if (isEnabled && layoutResponse.ok) {
-            const layoutResult = await layoutResponse.json();
-            if (layoutResult.data?.sections?.length > 0) {
-              setLayout(layoutResult.data);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('[StoreFrontRenderer] Error fetching config/layout:', e);
-        setError('Failed to load configuration');
-      } finally {
-        setIsLoading(false);
-      }
+      await fetchAndUpdateConfigAndLayout();
+      setIsLoading(false);
     };
 
-    fetchLayoutAndConfig();
-  }, [tenantId]);
+    initLayoutAndConfig();
+  }, [tenantId, fetchAndUpdateConfigAndLayout]);
 
   // Listen for real-time updates to store_studio_config and store_layout
   useEffect(() => {
@@ -231,46 +241,12 @@ export const StoreFrontRenderer: React.FC<StoreFrontRendererProps> = ({
       // Refetch config and layout when store studio settings change
       if (key === 'store_studio_config' || key === 'store_layout') {
         console.log('[StoreFrontRenderer] Detected update to', key, '- refetching...');
-        
-        const refetchConfigAndLayout = async () => {
-          try {
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-            const [configResponse, layoutResponse] = await Promise.all([
-              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
-              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
-            ]);
-
-            if (configResponse.ok) {
-              const configResult = await configResponse.json();
-              const isEnabled = configResult.data?.enabled || false;
-              const displayOrder = configResult.data?.productDisplayOrder || [];
-              
-              setStoreStudioEnabled(isEnabled);
-              setProductDisplayOrder(displayOrder);
-              
-              // Only use custom layout if store studio is enabled
-              if (isEnabled && layoutResponse.ok) {
-                const layoutResult = await layoutResponse.json();
-                if (layoutResult.data?.sections?.length > 0) {
-                  setLayout(layoutResult.data);
-                } else {
-                  setLayout(null);
-                }
-              } else {
-                setLayout(null);
-              }
-            }
-          } catch (e) {
-            console.warn('[StoreFrontRenderer] Error refetching config/layout:', e);
-          }
-        };
-
-        refetchConfigAndLayout();
+        fetchAndUpdateConfigAndLayout();
       }
     });
 
     return () => unsubscribe();
-  }, [tenantId]);
+  }, [tenantId, fetchAndUpdateConfigAndLayout]);
 
   // Get products filtered by tag
   const getTagProducts = useCallback((tagName: string) => {
