@@ -98,6 +98,8 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
       updatedAt: new Date().toISOString()
     };
     
+    // Store the previous config for proper revert
+    const previousConfig = config;
     setConfig(newConfig);
     
     // Auto-save the toggle
@@ -120,8 +122,8 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
     } catch (error) {
       console.error('Failed to toggle store studio:', error);
       toast.error('Failed to update configuration');
-      // Revert on error
-      setConfig(config);
+      // Revert to the previous config (not the closed-over value)
+      setConfig(previousConfig);
     } finally {
       setIsSaving(false);
     }

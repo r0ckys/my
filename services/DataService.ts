@@ -159,7 +159,9 @@ const initSocket = async (): Promise<Socket | null> => {
       'delivery_config': 'delivery',
       'payment_methods': 'payment_methods',
       'landing_pages': 'landing_pages',
-      'chat_messages': 'chat_messages'
+      'chat_messages': 'chat_messages',
+      'store_studio_config': 'store_studio_config',
+      'store_layout': 'store_layout'
     };
     const mappedKey = keyMap[payload.key] || payload.key;
     

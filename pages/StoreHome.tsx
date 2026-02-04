@@ -2,6 +2,7 @@
 import React, { lazy, Suspense, useCallback, useState, useEffect } from 'react';
 import type { Product, User, WebsiteConfig, Order, ProductVariantSelection } from '../types';
 import { noCacheFetchOptions } from '../utils/fetchHelpers';
+import { onDataRefresh } from '../services/DataService';
 
 // Custom hook with all business logic
 import { useStoreHome, formatSegment } from '../hooks/useStoreHome';
@@ -203,6 +204,59 @@ const StoreHome: React.FC<StoreHomeProps> = ({
       setCustomLayoutLoading(false);
     };
     checkCustomLayout();
+  }, [tenantId]);
+
+  // Listen for real-time updates to store_studio_config
+  useEffect(() => {
+    if (!tenantId) return;
+
+    const unsubscribe = onDataRefresh((key, updatedTenantId, fromSocket) => {
+      // Only respond to updates for this tenant
+      if (updatedTenantId !== tenantId) return;
+      
+      // Refetch when store studio settings or layout changes
+      if (key === 'store_studio_config' || key === 'store_layout') {
+        console.log('[StoreHome] Detected update to', key, '- refetching...');
+        
+        const refetchCustomLayout = async () => {
+          try {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+            const [configRes, layoutRes] = await Promise.all([
+              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
+              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
+            ]);
+            
+            if (configRes.ok && layoutRes.ok) {
+              const [configResult, layoutResult] = await Promise.all([
+                configRes.json(),
+                layoutRes.json()
+              ]);
+              
+              const isStoreStudioEnabled = configResult.data?.enabled || false;
+              const hasCustomLayout = layoutResult.data?.sections?.length > 0;
+              
+              if (isStoreStudioEnabled && hasCustomLayout) {
+                setUseCustomLayout(true);
+                console.log("[StoreHome] Using custom layout from Store Studio (live update)");
+              } else {
+                setUseCustomLayout(false);
+                if (!isStoreStudioEnabled) {
+                  console.log("[StoreHome] Store Studio is disabled (live update)");
+                } else {
+                  console.log("[StoreHome] No custom layout (live update)");
+                }
+              }
+            }
+          } catch (e) {
+            console.log("[StoreHome] Error refetching layout:", e);
+          }
+        };
+
+        refetchCustomLayout();
+      }
+    });
+
+    return () => unsubscribe();
   }, [tenantId]);
 
   // === HANDLERS ===

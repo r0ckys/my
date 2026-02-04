@@ -18,6 +18,7 @@ import {
 } from './skeletons';
 import type { Product, WebsiteConfig } from '../../types';
 import { noCacheFetchOptions } from '../../utils/fetchHelpers';
+import { onDataRefresh } from '../../services/DataService';
 
 // Lazy loaded sections
 const FlashSalesSection = lazy(() => import('./FlashSalesSection').then(m => ({ default: m.FlashSalesSection })));
@@ -217,6 +218,58 @@ export const StoreFrontRenderer: React.FC<StoreFrontRendererProps> = ({
     };
 
     fetchLayoutAndConfig();
+  }, [tenantId]);
+
+  // Listen for real-time updates to store_studio_config and store_layout
+  useEffect(() => {
+    if (!tenantId) return;
+
+    const unsubscribe = onDataRefresh((key, updatedTenantId, fromSocket) => {
+      // Only respond to updates for this tenant
+      if (updatedTenantId !== tenantId) return;
+      
+      // Refetch config and layout when store studio settings change
+      if (key === 'store_studio_config' || key === 'store_layout') {
+        console.log('[StoreFrontRenderer] Detected update to', key, '- refetching...');
+        
+        const refetchData = async () => {
+          try {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+            const [configResponse, layoutResponse] = await Promise.all([
+              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_studio_config`, noCacheFetchOptions),
+              fetch(`${API_BASE_URL}/api/tenant-data/${tenantId}/store_layout`, noCacheFetchOptions)
+            ]);
+
+            if (configResponse.ok) {
+              const configResult = await configResponse.json();
+              const isEnabled = configResult.data?.enabled || false;
+              const displayOrder = configResult.data?.productDisplayOrder || [];
+              
+              setStoreStudioEnabled(isEnabled);
+              setProductDisplayOrder(displayOrder);
+              
+              // Only use custom layout if store studio is enabled
+              if (isEnabled && layoutResponse.ok) {
+                const layoutResult = await layoutResponse.json();
+                if (layoutResult.data?.sections?.length > 0) {
+                  setLayout(layoutResult.data);
+                } else {
+                  setLayout(null);
+                }
+              } else {
+                setLayout(null);
+              }
+            }
+          } catch (e) {
+            console.warn('[StoreFrontRenderer] Error refetching config/layout:', e);
+          }
+        };
+
+        refetchData();
+      }
+    });
+
+    return () => unsubscribe();
   }, [tenantId]);
 
   // Get products filtered by tag
