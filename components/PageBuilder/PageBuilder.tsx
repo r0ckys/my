@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, JSX } from 'react';
 import { DndContext, closestCenter, DragEndEvent, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -493,6 +493,8 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
 
+  const [componentSearchQuery, setComponentSearchQuery] = useState<string>('');
+  const [sidebarTab, setSidebarTab] = useState<'components' | 'sections'>('components');
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const selectedSection = sections.find(s => s.id === selectedSectionId);
   const selectedBlock = selectedSection?.blocks.find(b => b.id === selectedBlockId);
@@ -620,6 +622,39 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
     
     setHasChanges(true);
     setSelectedSectionId(newSection.id);
+  };
+
+  // Handler for adding sections from Component Library with variant settings
+  const handleAddSectionFromLibrary = (variantId: string, sectionType: string, variantSettings: Record<string, any>, variantName: string) => {
+    const type = sectionType as SectionType;
+    const def = SECTION_DEFINITIONS[type];
+    if (!def) {
+      toast.error(`Unknown section type: ${sectionType}`);
+      return;
+    }
+
+    const newSection: PlacedSection = {
+      id: uuidv4(),
+      type,
+      name: variantName || def.label,
+      visible: true,
+      settings: { ...def.defaultSettings, ...variantSettings },
+      blocks: []
+    };
+
+    setSections(prev => {
+      if (def.category === 'header') {
+        const headerIdx = prev.findIndex(s => SECTION_DEFINITIONS[s.type].category !== 'header');
+        return [...prev.slice(0, headerIdx >= 0 ? headerIdx : prev.length), newSection, ...prev.slice(headerIdx >= 0 ? headerIdx : prev.length)];
+      }
+      if (def.category === 'footer') return [...prev, newSection];
+      const footerIdx = prev.findIndex(s => SECTION_DEFINITIONS[s.type].category === 'footer');
+      return [...prev.slice(0, footerIdx >= 0 ? footerIdx : prev.length), newSection, ...prev.slice(footerIdx >= 0 ? footerIdx : prev.length)];
+    });
+
+    setHasChanges(true);
+    setSelectedSectionId(newSection.id);
+    toast.success(`Added ${variantName || def.label}`);
   };
 
   const handleDeleteSection = (id: string) => {
@@ -797,7 +832,7 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
           
           <aside className={`
             fixed lg:static inset-y-0 left-0 z-50
-            w-64 bg-white border-r flex flex-col h-full overflow-hidden
+            w-80 bg-white border-r flex flex-col h-full overflow-hidden
             transform transition-transform duration-200 ease-in-out
             ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             top-14 lg:top-0
@@ -812,27 +847,71 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ tenantId }) => {
                 <Icons.X />
               </button>
             </div>
-            
-            <div className="p-3 border-b">
-              <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                <Icons.Home />
-                <span className="text-sm font-medium text-gray-700 flex-1 text-left">Home page</span>
-                <Icons.ChevronDown />
+
+            {/* Sidebar Tabs */}
+            <div className="flex border-b border-gray-200">
+              <button
+                onClick={() => setSidebarTab('components')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  sidebarTab === 'components'
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Icons.Grid />
+                  Add
+                </div>
+              </button>
+              <button
+                onClick={() => setSidebarTab('sections')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  sidebarTab === 'sections'
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Icons.Layers />
+                  Layout ({sections.length})
+                </div>
               </button>
             </div>
-            
-            <div className="flex-1 overflow-y-auto">
-              {renderSectionGroup('Header', headerSections, 'header')}
-              {renderSectionGroup('Template', mainSections, 'sections')}
-              {renderSectionGroup('Footer', footerSections, 'footer')}
-            </div>
-            
-            <div className="p-3 border-t">
-              <button className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                <Icons.Settings />
-                <span className="text-sm">Theme settings</span>
-              </button>
-            </div>
+
+            {/* Components Tab - Component Library */}
+            {sidebarTab === 'components' && (
+              <ComponentLibrary
+                onAddSection={handleAddSectionFromLibrary}
+                searchQuery={componentSearchQuery}
+                onSearchChange={setComponentSearchQuery}
+              />
+            )}
+
+            {/* Sections Tab - Current Sections List */}
+            {sidebarTab === 'sections' && (
+              <>
+                <div className="p-3 border-b">
+                  <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
+                    <Icons.Home />
+                    <span className="text-sm font-medium text-gray-700 flex-1 text-left">Home page</span>
+                    <Icons.ChevronDown />
+                  </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto">
+                  {renderSectionGroup('Header', headerSections, 'header')}
+                  {renderSectionGroup('Template', mainSections, 'sections')}
+                  {renderSectionGroup('Footer', footerSections, 'footer')}
+                </div>
+                
+                <div className="p-3 border-t">
+                  <button className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                    <Icons.Settings />
+                    <span className="text-sm">Theme settings</span>
+                  </button>
+                </div>
+              </>
+            )}
           </aside>
 
           {/* Center - Store Preview */}
