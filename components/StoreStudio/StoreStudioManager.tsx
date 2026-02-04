@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { 
   Store, Settings, Eye, EyeOff, Save, ArrowLeft, Loader2, 
   CheckCircle2, AlertCircle, Palette, Layout, Grid, Move 
@@ -32,6 +32,9 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'settings' | 'layout' | 'products'>('settings');
+  
+  // Ref to store the config before toggle for proper rollback
+  const configBeforeToggleRef = useRef<StoreStudioConfig | null>(null);
 
   // Fetch store studio configuration
   useEffect(() => {
@@ -91,13 +94,17 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
 
   // Toggle store studio enabled/disabled
   const handleToggleEnabled = async () => {
-    const newEnabled = !config.enabled;
-    const newConfig = {
+    // Store current config for rollback
+    configBeforeToggleRef.current = config;
+    
+    // Create new config with toggled state
+    const newConfig: StoreStudioConfig = {
       ...config,
-      enabled: newEnabled,
+      enabled: !config.enabled,
       updatedAt: new Date().toISOString()
     };
     
+    // Optimistically update UI
     setConfig(newConfig);
     
     // Auto-save the toggle
@@ -113,15 +120,18 @@ export const StoreStudioManager: React.FC<StoreStudioManagerProps> = ({
       });
 
       if (response.ok) {
-        toast.success(`Store Studio ${newEnabled ? 'enabled' : 'disabled'}!`);
+        toast.success(`Store Studio ${newConfig.enabled ? 'enabled' : 'disabled'}!`);
+        configBeforeToggleRef.current = null; // Clear rollback ref on success
       } else {
         throw new Error('Failed to save configuration');
       }
     } catch (error) {
       console.error('Failed to toggle store studio:', error);
       toast.error('Failed to update configuration');
-      // Revert on error
-      setConfig(config);
+      // Revert to the previous config stored in ref
+      if (configBeforeToggleRef.current) {
+        setConfig(configBeforeToggleRef.current);
+      }
     } finally {
       setIsSaving(false);
     }
