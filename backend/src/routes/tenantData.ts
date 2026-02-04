@@ -6,6 +6,16 @@ import { getTenantBySubdomain } from '../services/tenantsService';
 import { createAuditLog } from './auditLogs';
 import { Server as SocketIOServer } from 'socket.io';
 
+// Store Studio configuration interface
+interface StoreStudioConfig {
+  tenantId: string;
+  enabled: boolean;
+  productDisplayOrder?: number[];
+  customLayout?: unknown;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
 const paramsSchema = z.object({
   tenantId: z.string().min(1, 'tenantId is required'),
   key: z.string().min(1, 'key is required')
@@ -154,85 +164,9 @@ tenantDataRouter.get('/:tenantId/secondary', async (req, res, next) => {
   }
 });
 
-tenantDataRouter.get('/:tenantId/:key', async (req, res, next) => {
-  try {
-    const { tenantId, key } = paramsSchema.parse(req.params);
-    
-    // Use Redis cache for frequently accessed data like 'users'
-    const cacheKey = `tenant:${tenantId}:${key}`;
-    const cached = await getCached<unknown>(cacheKey);
-    if (cached !== null) {
-      console.log(`[Redis] Cache hit for ${tenantId}/${key}`);
-      res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate' });
-      return res.json({ data: cached });
-    }
-    
-    const data = await getTenantData(tenantId, key);
-    
-    // Cache the result for 5 minutes
-    if (data !== null) {
-      await setCachedWithTTL(cacheKey, data, 'short');
-    }
-    
-    // Prevent browser/CDN caching for dynamic tenant data
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
-    
-    res.json({ data });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.message });
-    }
-    next(error);
-  }
-});
-
-tenantDataRouter.put('/:tenantId/:key', async (req, res, next) => {
-  try {
-    const { tenantId, key } = paramsSchema.parse(req.params);
-    const payload = updateSchema.parse(req.body ?? {});
-    await setTenantData(tenantId, key, payload.data);
-    
-    // Emit real-time update via Socket.IO
-    emitDataUpdate(req, tenantId, key, payload.data);
-    
-    console.log(`[TenantData] Saved ${key} for tenant ${tenantId}`);
-    
-    // Create audit log for important data changes
-    if (['products', 'categories', 'subcategories', 'childcategories', 'brands', 'tags'].includes(key)) {
-      const user = (req as any).user;
-      const dataArray = Array.isArray(payload.data) ? payload.data : [];
-      await createAuditLog({
-        tenantId,
-        userId: user?._id || user?.id || 'system',
-        userName: user?.name || 'System',
-        userRole: user?.role || 'system',
-        action: `${key.charAt(0).toUpperCase() + key.slice(1)} Updated`,
-        actionType: 'update',
-        resourceType: key === 'products' ? 'product' : key === 'categories' ? 'category' : 'other',
-        resourceId: tenantId,
-        resourceName: key,
-        details: `${key} data updated (${dataArray.length} items)`,
-        metadata: { key, itemCount: dataArray.length },
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-        status: 'success'
-      });
-    }
-    res.json({ data: { tenantId, key, success: true } });
-  } catch (error) {
-    console.error(`[TenantData] Error saving ${req.params.key} for ${req.params.tenantId}:`, error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.message });
-    }
-    next(error);
-  }
-});
-
 // Store Studio Configuration Endpoints
+// NOTE: These specific routes MUST be defined BEFORE the generic /:tenantId/:key routes
+// otherwise Express will match the generic route first
 
 // Get store studio configuration
 tenantDataRouter.get('/:tenantId/store_studio_config', async (req, res, next) => {
@@ -355,7 +289,7 @@ tenantDataRouter.put('/:tenantId/product_display_order', async (req, res, next) 
     }
     
     // Update the store studio config with new product order
-    const existingConfig = await getTenantData(tenantId, 'store_studio_config') || {
+    const existingConfig: StoreStudioConfig = (await getTenantData(tenantId, 'store_studio_config') as StoreStudioConfig | null) || {
       tenantId,
       enabled: false,
       updatedAt: new Date().toISOString()
@@ -399,5 +333,86 @@ tenantDataRouter.put('/:tenantId/product_display_order', async (req, res, next) 
       error: 'Failed to update product display order',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+});
+
+// Generic tenant data endpoints
+// NOTE: These MUST be defined AFTER specific routes like store_studio_config
+
+tenantDataRouter.get('/:tenantId/:key', async (req, res, next) => {
+  try {
+    const { tenantId, key } = paramsSchema.parse(req.params);
+    
+    // Use Redis cache for frequently accessed data like 'users'
+    const cacheKey = `tenant:${tenantId}:${key}`;
+    const cached = await getCached<unknown>(cacheKey);
+    if (cached !== null) {
+      console.log(`[Redis] Cache hit for ${tenantId}/${key}`);
+      res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate' });
+      return res.json({ data: cached });
+    }
+    
+    const data = await getTenantData(tenantId, key);
+    
+    // Cache the result for 5 minutes
+    if (data !== null) {
+      await setCachedWithTTL(cacheKey, data, 'short');
+    }
+    
+    // Prevent browser/CDN caching for dynamic tenant data
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    res.json({ data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.message });
+    }
+    next(error);
+  }
+});
+
+tenantDataRouter.put('/:tenantId/:key', async (req, res, next) => {
+  try {
+    const { tenantId, key } = paramsSchema.parse(req.params);
+    const payload = updateSchema.parse(req.body ?? {});
+    await setTenantData(tenantId, key, payload.data);
+    
+    // Emit real-time update via Socket.IO
+    emitDataUpdate(req, tenantId, key, payload.data);
+    
+    console.log(`[TenantData] Saved ${key} for tenant ${tenantId}`);
+    
+    // Create audit log for important data changes
+    if (['products', 'categories', 'subcategories', 'childcategories', 'brands', 'tags'].includes(key)) {
+      const user = (req as any).user;
+      const dataArray = Array.isArray(payload.data) ? payload.data : [];
+      await createAuditLog({
+        tenantId,
+        userId: user?._id || user?.id || 'system',
+        userName: user?.name || 'System',
+        userRole: user?.role || 'system',
+        action: `${key.charAt(0).toUpperCase() + key.slice(1)} Updated`,
+        actionType: 'update',
+        resourceType: key === 'products' ? 'product' : key === 'categories' ? 'category' : 'other',
+        resourceId: tenantId,
+        resourceName: key,
+        details: `${key} data updated (${dataArray.length} items)`,
+        metadata: { key, itemCount: dataArray.length },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        status: 'success'
+      });
+    }
+    res.json({ data: { tenantId, key, success: true } });
+  } catch (error) {
+    console.error(`[TenantData] Error saving ${req.params.key} for ${req.params.tenantId}:`, error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.message });
+    }
+    next(error);
   }
 });
