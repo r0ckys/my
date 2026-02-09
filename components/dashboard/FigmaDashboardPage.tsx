@@ -55,7 +55,7 @@ const FigmaDashboardPage: React.FC<FigmaDashboardPageProps> = ({
   const returnsOrders = orders.filter(o => o.status === 'Returned').length || 35;
 
   // Format currency
-  const formattedAmount = '\u09F3' + totalAmount.toLocaleString('en-IN');
+  const formattedAmount = `৳${totalAmount.toLocaleString('en-IN')}`;
 
   // Best selling products data
   const bestSellingData = products.slice(0, 4).map((p, idx) => ({
@@ -63,7 +63,7 @@ const FigmaDashboardPage: React.FC<FigmaDashboardPageProps> = ({
     name: p.name || ['Apple iPhone 13', 'Nike Air Jordan', 'T-shirt', 'Cross Bag'][idx],
     totalOrder: String(Math.floor(Math.random() * 500) + 50),
     status: (p.stock || 0) > 20 ? 'In Stock' : (p.stock || 0) > 0 ? 'Low Stock' : 'Stock out' as 'In Stock' | 'Low Stock' | 'Stock out',
-    price: '$' + (p.price || 999).toFixed(2),
+    price: `$${(p.price || 999).toFixed(2)}`,
     image: p.images?.[0]
   }));
 
@@ -71,8 +71,8 @@ const FigmaDashboardPage: React.FC<FigmaDashboardPageProps> = ({
   const topProductsData = products.slice(0, 5).map((p, idx) => ({
     id: p.id || String(idx + 1),
     name: p.name || ['Apple iPhone 13', 'Nike Air Jordan', 'T-shirt', 'Assorted Cross Bag', 'Fur Pom Gloves'][idx],
-    itemCode: '#FXZ-' + (4567 + idx),
-    price: '$' + (p.price || [999, 72.4, 35.4, 80, 45][idx]).toFixed(2),
+    itemCode: `#FXZ-${4567 + idx}`,
+    price: `$${(p.price || [999, 72.4, 35.4, 80, 45][idx]).toFixed(2)}`,
     image: p.images?.[0]
   }));
 
@@ -90,76 +90,78 @@ const FigmaDashboardPage: React.FC<FigmaDashboardPageProps> = ({
         onSearch: () => console.log('Search submitted')
       }}
     >
-      {/* Overview Section */}
-      <FigmaOverview
-        stats={{
-          totalProducts,
-          totalOrders,
-          totalAmount: formattedAmount,
-          lowStock,
-          toReview
-        }}
-        currentLang={language}
-        onLangChange={setLanguage}
-      />
+      <div className="space-y-4 pb-4">
+        {/* Overview Section */}
+        <FigmaOverview
+          stats={{
+            totalProducts,
+            totalOrders,
+            totalAmount: formattedAmount,
+            lowStock,
+            toReview
+          }}
+          currentLang={language}
+          onLangChange={setLanguage}
+        />
 
-      {/* Visitor Stats + Analytics Bar Chart Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-6">
-        {/* Visitor Stats - Left Side */}
-        <div className="lg:col-span-4">
-          <FigmaVisitorStats
-            visitorStats={{
-              onlineNow: 35,
-              todayVisitors: 35,
-              totalVisitors: 35
-            }}
-          />
+        {/* Visitor Stats + Analytics Bar Chart Row */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 px-3 sm:px-4 lg:px-6">
+          {/* Visitor Stats - Left Side */}
+          <div className="md:col-span-4 lg:col-span-3">
+            <FigmaVisitorStats
+              visitorStats={{
+                onlineNow: 35,
+                todayVisitors: 35,
+                totalVisitors: 35
+              }}
+            />
+          </div>
+
+          {/* Analytics Bar Chart - Right Side */}
+          <div className="md:col-span-8 lg:col-span-9">
+            <FigmaAnalyticsChart
+              timeFilter="December 2025"
+              onTimeFilterChange={setTimeFilter}
+            />
+          </div>
         </div>
 
-        {/* Analytics Bar Chart - Right Side */}
-        <div className="lg:col-span-8">
-          <FigmaAnalyticsChart
-            timeFilter="December 2025"
-            onTimeFilterChange={setTimeFilter}
-          />
-        </div>
-      </div>
+        {/* Order Status Row */}
+        <FigmaOrderStatus
+          orderStats={{
+            pending: pendingOrders,
+            confirmed: confirmedOrders,
+            courier: courierOrders,
+            delivered: deliveredOrders,
+            canceled: canceledOrders,
+            returns: returnsOrders
+          }}
+        />
 
-      {/* Order Status Row */}
-      <FigmaOrderStatus
-        orderStats={{
-          pending: pendingOrders,
-          confirmed: confirmedOrders,
-          courier: courierOrders,
-          delivered: deliveredOrders,
-          canceled: canceledOrders,
-          returns: returnsOrders
-        }}
-      />
+        {/* Sales Performance + Sales by Category Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 px-3 sm:px-4 lg:px-6">
+          {/* Sales Performance Chart - Left Side */}
+          <div className="lg:col-span-8">
+            <FigmaSalesPerformance />
+          </div>
 
-      {/* Sales Performance + Sales by Category Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-6">
-        {/* Sales Performance Chart - Left Side */}
-        <div className="lg:col-span-8">
-          <FigmaSalesPerformance />
+          {/* Sales by Category Pie Chart - Right Side */}
+          <div className="lg:col-span-4">
+            <FigmaSalesByCategory />
+          </div>
         </div>
 
-        {/* Sales by Category Pie Chart - Right Side */}
-        <div className="lg:col-span-4">
-          <FigmaSalesByCategory />
-        </div>
-      </div>
+        {/* Best Selling Products + Top Products Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 px-3 sm:px-4 lg:px-6">
+          {/* Best Selling Products Table - Left Side */}
+          <div className="lg:col-span-8">
+            <FigmaBestSellingProducts products={bestSellingData} />
+          </div>
 
-      {/* Best Selling Products + Top Products Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-6 pb-6">
-        {/* Best Selling Products Table - Left Side */}
-        <div className="lg:col-span-8">
-          <FigmaBestSellingProducts products={bestSellingData} />
-        </div>
-
-        {/* Top Products List - Right Side */}
-        <div className="lg:col-span-4">
-          <FigmaTopProducts products={topProductsData} />
+          {/* Top Products List - Right Side */}
+          <div className="lg:col-span-4">
+            <FigmaTopProducts products={topProductsData} />
+          </div>
         </div>
       </div>
     </DashboardLayout>
