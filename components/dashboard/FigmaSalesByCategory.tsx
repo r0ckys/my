@@ -4,6 +4,7 @@ interface CategoryData {
   name: string;
   percentage: number;
   color: string;
+  bgColor: string;
 }
 
 interface FigmaSalesByCategoryProps {
@@ -12,13 +13,13 @@ interface FigmaSalesByCategoryProps {
 
 const FigmaSalesByCategory: React.FC<FigmaSalesByCategoryProps> = ({
   categories = [
-    { name: 'Hair care', percentage: 15, color: '#3B82F6' },
-    { name: 'Serum', percentage: 15, color: '#F97316' },
-    { name: 'Cream', percentage: 15, color: '#FBBF24' },
-    { name: 'Home & kitchen', percentage: 15, color: '#EF4444' },
-    { name: 'Lip care', percentage: 15, color: '#8B5CF6' },
-    { name: 'Air Conditioner', percentage: 15, color: '#06B6D4' },
-    { name: 'Skin care', percentage: 10, color: '#10B981' }
+    { name: 'Hair care', percentage: 15, color: '#4F46E5', bgColor: 'bg-indigo-600' },
+    { name: 'Serum', percentage: 15, color: '#FB923C', bgColor: 'bg-orange-400' },
+    { name: 'Cream', percentage: 15, color: '#FCA5A5', bgColor: 'bg-red-300' },
+    { name: 'Home & kitchen', percentage: 15, color: '#EF4444', bgColor: 'bg-red-500' },
+    { name: 'Lip care', percentage: 15, color: '#A3E635', bgColor: 'bg-lime-400' },
+    { name: 'Air Conditioner', percentage: 15, color: '#38BDF8', bgColor: 'bg-sky-400' },
+    { name: 'Skin care', percentage: 10, color: '#A21CAF', bgColor: 'bg-fuchsia-700' }
   ]
 }) => {
   // Calculate angles for pie chart
@@ -70,34 +71,45 @@ const FigmaSalesByCategory: React.FC<FigmaSalesByCategoryProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>Sale By Category</h3>
+    <div 
+      className="bg-white rounded-xl p-6 h-full flex flex-col"
+      style={{ 
+        boxShadow: '0px 2px 9.6px rgba(0, 0, 0, 0.08)',
+        fontFamily: 'Poppins, sans-serif'
+      }}
+    >
+      <h3 className="text-base font-semibold text-zinc-800 mb-4">Sale By Category</h3>
       
       <div className="flex flex-col items-center flex-1">
-        {/* Pie Chart */}
-        <div className="w-40 h-40 mb-6">
+        {/* Pie Chart - Donut style */}
+        <div className="w-44 h-44 relative mb-6">
           <svg width="100%" height="100%" viewBox="0 0 200 200" className="transform -rotate-90">
             {segments.map((segment, index) => (
               <path
                 key={index}
-                d={createPath(segment.startAngle, segment.endAngle, 85, 45)}
+                d={createPath(segment.startAngle, segment.endAngle, 90, 50)}
                 fill={segment.color}
                 className="hover:opacity-80 transition-opacity cursor-pointer"
-                title={`${segment.name}: ${segment.percentage}%`}
               />
             ))}
           </svg>
+          {/* Center circle for donut effect */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-white shadow-inner"></div>
+          </div>
         </div>
         
-        {/* Legend */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full">
+        {/* Legend - Two columns */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full">
           {categories.map((category, index) => (
             <div key={index} className="flex items-center gap-2">
               <div 
-                className="w-3 h-3 rounded-full flex-shrink-0" 
-                style={{ backgroundColor: category.color }}
+                className={`w-3 h-3 rounded-full flex-shrink-0 ${category.bgColor}`}
               ></div>
-              <span className="text-xs text-gray-600 truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              <span 
+                className="text-xs text-zinc-500 truncate"
+                style={{ fontFamily: 'Lato, sans-serif' }}
+              >
                 {category.name}({category.percentage}%)
               </span>
             </div>

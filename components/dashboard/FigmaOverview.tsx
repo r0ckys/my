@@ -1,34 +1,30 @@
 import React from 'react';
-import {
-  Package,
-  ShoppingCart,
-  DollarSign,
-  TrendingDown,
-  Eye,
-  Calendar,
-  AlertCircle,
-  Tag
-} from 'lucide-react';
+
+// Icon URLs
+const ICON_URLS = {
+  totalProduct: 'https://hdnfltv.com/image/nitimages/streamline-flex_production-belt-time__2_.webp',
+  totalOrder: 'https://hdnfltv.com/image/nitimages/lets-icons_order-light__2_.webp',
+  lowStock: 'https://hdnfltv.com/image/nitimages/hugeicons_hot-price__5_.webp',
+  totalAmount: 'https://hdnfltv.com/image/nitimages/solar_tag-price-linear__2_.webp',
+  toReview: 'https://hdnfltv.com/image/nitimages/mage_preview__1_.webp'
+};
 
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: React.ComponentType<any>;
-  iconBg: string;
-  iconColor: string;
+  iconUrl: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, iconBg, iconColor }) => {
+const StatCard: React.FC<StatCardProps> = ({ title, value, iconUrl }) => {
   return (
-    <div className="bg-[#F5F5F5] rounded-xl p-4 h-full">
-      <div className="flex items-center justify-between h-full">
-        <div className="flex-1">
-          <div className="text-2xl font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>{value}</div>
-          <div className="text-sm text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>{title}</div>
-        </div>
-        <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center`}>
-          <Icon className={`w-6 h-6 ${iconColor}`} />
-        </div>
+    <div 
+      className="bg-stone-50 rounded-lg p-4 h-16 relative overflow-hidden"
+      style={{ fontFamily: 'Poppins, sans-serif' }}
+    >
+      <div className="absolute left-4 top-1.5 text-black text-2xl font-medium">{value}</div>
+      <div className="absolute left-4 top-[42px] text-black text-xs font-medium">{title}</div>
+      <div className="absolute right-3 top-3 w-11 h-11 bg-white rounded-lg flex items-center justify-center">
+        <img src={iconUrl} alt={title} className="w-8 h-8 object-contain" />
       </div>
     </div>
   );
@@ -41,31 +37,26 @@ interface LanguageSelectorProps {
 
 const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang, onLangChange }) => {
   return (
-    <div className="bg-[#F5F5F5] rounded-xl p-4 h-full flex flex-col">
-      <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Language</div>
-      <div className="flex items-center gap-1 bg-white rounded-full p-1 w-fit">
+    <div 
+      className="bg-stone-50 rounded-lg h-16 p-4"
+      style={{ fontFamily: 'Poppins, sans-serif' }}
+    >
+      <div className="text-black text-xs font-normal mb-2">Language</div>
+      <div className="w-24 h-6 bg-white/0 rounded-3xl border border-white flex items-center overflow-hidden">
         <button 
           onClick={() => onLangChange('en')}
-          className={`px-4 py-1.5 text-xs rounded-full transition-colors ${
-            currentLang === 'en' 
-              ? 'bg-gray-100 text-gray-900 font-medium' 
-              : 'text-gray-500 hover:text-gray-700'
+          className={`w-11 h-4 mx-1 rounded-[20px] text-xs flex items-center justify-center ${
+            currentLang === 'en' ? 'bg-white' : ''
           }`}
-          style={{ fontFamily: 'Poppins, sans-serif' }}
         >
           Eng
         </button>
-        <button 
+        <span 
           onClick={() => onLangChange('bn')}
-          className={`px-4 py-1.5 text-xs rounded-full transition-colors ${
-            currentLang === 'bn' 
-              ? 'bg-gray-100 text-gray-900 font-medium' 
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-          style={{ fontFamily: 'Poppins, sans-serif' }}
+          className="text-black text-xs cursor-pointer"
         >
           বাংলা
-        </button>
+        </span>
       </div>
     </div>
   );
@@ -78,14 +69,13 @@ interface DateDisplayProps {
 
 const DateDisplay: React.FC<DateDisplayProps> = ({ date, dayName }) => {
   return (
-    <div className="bg-[#F5F5F5] rounded-xl p-4 h-full flex flex-col relative overflow-hidden">
-      <div className="absolute -top-12 -right-8 w-32 h-32 rounded-full bg-gradient-to-br from-blue-400/20 to-cyan-400/10" />
-      <div className="text-sm text-gray-600 mb-1 relative z-10" style={{ fontFamily: 'Poppins, sans-serif' }}>{date}</div>
-      <div className="flex items-center justify-center mt-auto">
-        <div className="px-6 py-2 bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg">
-          <span className="text-2xl font-semibold text-white relative z-10" style={{ fontFamily: 'Poppins, sans-serif' }}>{dayName}</span>
-        </div>
-      </div>
+    <div 
+      className="bg-stone-50 rounded-lg h-16 relative overflow-hidden"
+      style={{ fontFamily: 'Poppins, sans-serif' }}
+    >
+      <div className="absolute w-40 h-40 left-[26.5px] top-[22px] bg-gradient-to-r from-sky-400 to-blue-500 rounded-full" />
+      <div className="absolute left-[10.5px] top-[10px] text-black text-base font-medium">{date}</div>
+      <div className="absolute left-[67.5px] top-[34px] text-white text-2xl font-medium z-10">{dayName}</div>
     </div>
   );
 };
@@ -95,28 +85,26 @@ interface NotificationCardProps {
   content?: React.ReactNode;
 }
 
-const NotificationCard: React.FC<NotificationCardProps> = ({ title, content }) => {
+const NotificationCard: React.FC<NotificationCardProps> = ({ title }) => {
   return (
-    <div className="bg-[#F5F5F5] rounded-xl p-4 h-full flex flex-col">
-      <div className="text-sm text-gray-500 mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{title}</div>
-      <div className="bg-white rounded-lg h-24 mb-3 flex items-center justify-center overflow-hidden flex-1">
+    <div 
+      className="bg-stone-50 rounded-lg h-36 p-4 relative"
+      style={{ fontFamily: 'Poppins, sans-serif' }}
+    >
+      <div className="text-black text-xs font-normal">{title}</div>
+      <div className="w-56 h-24 bg-white rounded-lg mt-2 flex items-center justify-center overflow-hidden">
         <img 
-          src="https://via.placeholder.com/300x100?text=Notification+Banner" 
+          src="https://placehold.co/232x54" 
           alt="Notification"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = '';
-            target.parentElement!.innerHTML = '<span class="text-gray-400 text-xs">Notification Banner</span>';
-          }}
+          className="w-56 h-14 object-cover"
         />
       </div>
-      <div className="flex justify-center gap-1.5">
-        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-        <div className="w-4 h-2 rounded-full bg-blue-500"></div>
-        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+      <div className="absolute left-[99px] top-[135px] flex items-center gap-1">
+        <div className="w-2 h-2 bg-white rounded-full" />
+        <div className="w-4 h-2 bg-gradient-to-r from-sky-400 to-blue-500 rounded-[32px]" />
+        <div className="w-2 h-2 bg-white rounded-full" />
+        <div className="w-2 h-2 bg-white rounded-full" />
+        <div className="w-2 h-2 bg-white rounded-full" />
       </div>
     </div>
   );
@@ -136,86 +124,63 @@ interface FigmaOverviewProps {
 
 const FigmaOverview: React.FC<FigmaOverviewProps> = ({
   stats = {
-    totalProducts: 45,
-    totalOrders: 6550,
-    totalAmount: '৳8,35,500',
-    lowStock: 5,
+    totalProducts: 4,
+    totalOrders: 65,
+    totalAmount: '35',
+    lowStock: 45,
     toReview: 452
   },
   currentLang = 'en',
   onLangChange = () => {}
 }) => {
-  // Get current date info
   const now = new Date();
   const currentDate = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
   const currentDay = now.toLocaleDateString('en-US', { weekday: 'short' });
 
   return (
-    <div className="bg-white rounded-xl mx-6 p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>Overview</h2>
+    <div className="bg-white rounded-lg mx-6 p-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <h2 className="text-black text-base font-semibold mb-6">Order Analytics</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         {/* Row 1 */}
-        <div className="lg:col-span-1">
-          <StatCard
-            title="Total Products"
-            value={stats.totalProducts || 45}
-            icon={Package}
-            iconBg="bg-white"
-            iconColor="text-blue-500"
-          />
-        </div>
+        <StatCard
+          title="Products on Hands"
+          value={stats.totalProducts || 4}
+          iconUrl={ICON_URLS.totalProduct}
+        />
         
-        <div className="lg:col-span-1">
-          <StatCard
-            title="Total Orders"
-            value={(stats.totalOrders || 6550).toLocaleString()}
-            icon={ShoppingCart}
-            iconBg="bg-white"
-            iconColor="text-green-500"
-          />
-        </div>
+        <StatCard
+          title="Total Orders"
+          value={stats.totalOrders || 65}
+          iconUrl={ICON_URLS.totalOrder}
+        />
         
-        <div className="lg:col-span-1">
-          <LanguageSelector currentLang={currentLang} onLangChange={onLangChange} />
-        </div>
+        <LanguageSelector currentLang={currentLang} onLangChange={onLangChange} />
         
-        <div className="lg:col-span-1">
-          <DateDisplay date={currentDate} dayName={currentDay} />
-        </div>
+        <DateDisplay date={currentDate} dayName={currentDay} />
         
         <div className="lg:col-span-2">
           <NotificationCard title="Important Notification" />
         </div>
 
         {/* Row 2 */}
-        <div className="lg:col-span-1">
-          <StatCard
-            title="Low Stock"
-            value={stats.lowStock || 5}
-            icon={AlertCircle}
-            iconBg="bg-white"
-            iconColor="text-orange-500"
-          />
-        </div>
+        <StatCard
+          title="Reserved Price"
+          value={stats.totalAmount || '35'}
+          iconUrl={ICON_URLS.totalAmount}
+        />
         
-        <div className="lg:col-span-1">
-          <StatCard
-            title="Total Amount"
-            value={stats.totalAmount || '৳8,35,500'}
-            icon={Tag}
-            iconBg="bg-white"
-            iconColor="text-purple-500"
-          />
-        </div>
+        <StatCard
+          title="Low Stock"
+          value={stats.lowStock || 45}
+          iconUrl={ICON_URLS.lowStock}
+        />
         
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-2">
           <StatCard
             title="To be Reviewed"
             value={stats.toReview || 452}
-            icon={Eye}
-            iconBg="bg-white"
-            iconColor="text-indigo-500"
+            iconUrl={ICON_URLS.toReview}
           />
         </div>
       </div>

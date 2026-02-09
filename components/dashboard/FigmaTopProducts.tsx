@@ -1,5 +1,12 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+
+// Search Icon SVG Component
+const SearchIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8.25 14.25C11.5637 14.25 14.25 11.5637 14.25 8.25C14.25 4.93629 11.5637 2.25 8.25 2.25C4.93629 2.25 2.25 4.93629 2.25 8.25C2.25 11.5637 4.93629 14.25 8.25 14.25Z" stroke="#71717A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M15.75 15.75L12.4875 12.4875" stroke="#71717A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
 interface TopProduct {
   id: string;
@@ -42,51 +49,73 @@ const FigmaTopProducts: React.FC<FigmaTopProductsProps> = ({
   ]
 }) => {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
+    <div 
+      className="bg-white rounded-xl p-6 h-full"
+      style={{ 
+        boxShadow: '0px 2px 9.6px rgba(0, 0, 0, 0.08)',
+        fontFamily: 'Poppins, sans-serif'
+      }}
+    >
       {/* Header */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>Top Products</h3>
-          <span className="text-sm text-blue-500 cursor-pointer hover:underline" style={{ fontFamily: 'Poppins, sans-serif' }}>All product</span>
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-zinc-800">Top Products</h3>
+          <span className="text-sm text-sky-400 cursor-pointer hover:text-sky-500 transition-colors">
+            All product
+          </span>
         </div>
         
         {/* Search Bar */}
         <div className="relative">
-          <div className="flex items-center bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
-            <Search className="w-4 h-4 text-gray-400 mr-2" />
+          <div className="flex items-center bg-zinc-100 rounded-lg px-3 py-2.5">
+            <SearchIcon />
             <input
               type="text"
               placeholder="Search"
-              className="bg-transparent flex-1 text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
+              className="bg-transparent flex-1 text-sm text-zinc-700 placeholder-zinc-400 focus:outline-none ml-2"
+              style={{ fontFamily: 'Lato, sans-serif' }}
             />
           </div>
         </div>
       </div>
 
       {/* Products List */}
-      <div className="space-y-3 flex-1">
+      <div className="space-y-3">
         {products.map((product) => (
-          <div key={product.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+          <div 
+            key={product.id} 
+            className="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-lg transition-colors cursor-pointer"
+          >
             {/* Product Image */}
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-zinc-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
               {product.image ? (
-                <img src={product.image} alt={product.name} className="w-10 h-10 object-cover rounded" />
+                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                  <span className="text-sm text-gray-500">{product.name.charAt(0)}</span>
-                </div>
+                <span className="text-sm text-zinc-400 font-medium">{product.name.charAt(0)}</span>
               )}
             </div>
             
             {/* Product Info */}
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-medium text-gray-900 truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>{product.name}</h4>
-              <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'Poppins, sans-serif' }}>Item: {product.itemCode}</p>
+              <h4 
+                className="text-sm font-medium text-zinc-700 truncate"
+                style={{ fontFamily: 'Lato, sans-serif' }}
+              >
+                {product.name}
+              </h4>
+              <p 
+                className="text-xs text-zinc-500 mt-0.5"
+                style={{ fontFamily: 'Lato, sans-serif' }}
+              >
+                Item: {product.itemCode}
+              </p>
             </div>
             
             {/* Price */}
-            <div className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <div 
+              className="text-sm font-semibold text-zinc-800"
+              style={{ fontFamily: 'Lato, sans-serif' }}
+            >
               {product.price}
             </div>
           </div>
