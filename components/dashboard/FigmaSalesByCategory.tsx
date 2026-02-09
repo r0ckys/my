@@ -72,17 +72,17 @@ const FigmaSalesByCategory: React.FC<FigmaSalesByCategoryProps> = ({
 
   return (
     <div 
-      className="bg-white rounded-xl p-6 h-full flex flex-col"
+      className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 lg:p-6 h-full flex flex-col"
       style={{ 
         boxShadow: '0px 2px 9.6px rgba(0, 0, 0, 0.08)',
         fontFamily: 'Poppins, sans-serif'
       }}
     >
-      <h3 className="text-base font-semibold text-zinc-800 mb-4">Sale By Category</h3>
+      <h3 className="text-sm sm:text-base font-semibold text-zinc-800 mb-2 sm:mb-3 md:mb-4">Sale By Category</h3>
       
       <div className="flex flex-col items-center flex-1">
         {/* Pie Chart - Donut style */}
-        <div className="w-44 h-44 relative mb-6">
+        <div className="w-28 sm:w-36 md:w-40 lg:w-44 h-28 sm:h-36 md:h-40 lg:h-44 relative mb-3 sm:mb-4 md:mb-6">
           <svg width="100%" height="100%" viewBox="0 0 200 200" className="transform -rotate-90">
             {segments.map((segment, index) => (
               <path
@@ -95,19 +95,19 @@ const FigmaSalesByCategory: React.FC<FigmaSalesByCategoryProps> = ({
           </svg>
           {/* Center circle for donut effect */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-white shadow-inner"></div>
+            <div className="w-12 sm:w-16 md:w-18 lg:w-20 h-12 sm:h-16 md:h-18 lg:h-20 rounded-full bg-white shadow-inner"></div>
           </div>
         </div>
         
         {/* Legend - Two columns */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full">
+        <div className="grid grid-cols-2 gap-x-3 sm:gap-x-4 md:gap-x-6 gap-y-1 sm:gap-y-1.5 md:gap-y-2 w-full">
           {categories.map((category, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div key={index} className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
               <div 
-                className={`w-3 h-3 rounded-full flex-shrink-0 ${category.bgColor}`}
+                className={`w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0 ${category.bgColor}`}
               ></div>
               <span 
-                className="text-xs text-zinc-500 truncate"
+                className="text-[10px] sm:text-xs text-zinc-500 truncate"
                 style={{ fontFamily: 'Lato, sans-serif' }}
               >
                 {category.name}({category.percentage}%)

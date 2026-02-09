@@ -58,19 +58,19 @@ const OrderStatusItem: React.FC<OrderStatusItemProps> = ({
 }) => {
   return (
     <div 
-      className="w-44 h-12 relative bg-white rounded-lg overflow-hidden"
+      className="w-full sm:w-auto sm:min-w-[140px] md:min-w-[160px] lg:min-w-[176px] h-10 sm:h-11 md:h-12 relative bg-white rounded-lg overflow-hidden"
       style={{ 
         boxShadow: '0px 2px 9.6px rgba(0, 0, 0, 0.08)',
         fontFamily: 'Poppins, sans-serif'
       }}
     >
-      <div className={`absolute left-2 top-2 w-8 h-8 ${iconBg} rounded-lg flex items-center justify-center`}>
+      <div className={`absolute left-1.5 sm:left-2 top-1 sm:top-2 w-7 h-7 sm:w-8 sm:h-8 ${iconBg} rounded-md sm:rounded-lg flex items-center justify-center`}>
         {icon}
       </div>
-      <div className="absolute left-[46px] top-[15px] text-black text-xs font-medium">
+      <div className="absolute left-9 sm:left-[46px] top-[50%] -translate-y-1/2 sm:translate-y-0 sm:top-[15px] text-black text-[11px] sm:text-xs font-medium">
         {label}
       </div>
-      <div className="absolute left-[140px] top-[6px] text-black text-2xl font-medium">
+      <div className="absolute right-2 sm:right-3 md:left-auto md:right-2 top-[50%] -translate-y-1/2 sm:translate-y-0 sm:top-[6px] text-black text-xl sm:text-2xl font-medium">
         {count}
       </div>
     </div>
@@ -99,10 +99,10 @@ const FigmaOrderStatus: React.FC<FigmaOrderStatusProps> = ({
   }
 }) => {
   return (
-    <div className="px-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      <h2 className="text-black text-base font-semibold mb-4">Order</h2>
+    <div className="px-3 sm:px-4 md:px-5 lg:px-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <h2 className="text-black text-sm sm:text-base font-semibold mb-2 sm:mb-3 md:mb-4">Order</h2>
       
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
         <OrderStatusItem
           icon={<TodayIcon />}
           label="Today"

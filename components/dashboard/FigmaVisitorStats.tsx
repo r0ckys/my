@@ -64,30 +64,30 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
   const config = themes[theme];
 
   return (
-    <div className={`relative overflow-hidden rounded-xl ${config.bgClass} p-4`}>
+    <div className={`relative overflow-hidden rounded-lg sm:rounded-xl ${config.bgClass} p-2.5 sm:p-3 md:p-4`}>
       {/* Background decorative circle */}
       <div 
-        className={`absolute w-40 h-40 rounded-full ${config.circleClass}`}
-        style={{ right: '-30px', top: '-60px' }}
+        className={`absolute w-28 sm:w-36 md:w-40 h-28 sm:h-36 md:h-40 rounded-full ${config.circleClass}`}
+        style={{ right: '-20px', top: '-40px' }}
       />
       
-      <div className="relative z-10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="relative z-10 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Icon */}
-          <div className="w-8 h-8 flex items-center justify-center">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center shrink-0">
             {icon}
           </div>
           
           {/* Text */}
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <span
-              className="text-sm font-medium"
+              className="text-xs sm:text-sm font-medium truncate"
               style={{ color: config.titleColor, fontFamily: 'Poppins, sans-serif' }}
             >
               {title}
             </span>
             <span
-              className="text-xs text-gray-600"
+              className="text-[10px] sm:text-xs text-gray-600 truncate"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
               {subtitle}
@@ -97,7 +97,7 @@ const VisitorCard: React.FC<VisitorCardProps> = ({
         
         {/* Value */}
         <span
-          className="text-2xl font-semibold text-gray-900"
+          className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 shrink-0"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
           {value}
@@ -127,12 +127,12 @@ const FigmaVisitorStats: React.FC<FigmaVisitorStatsProps> = ({
   }
 }) => {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="grid grid-cols-3 md:grid-cols-1 gap-2 sm:gap-3">
       {/* Online Now - Blue theme */}
       <VisitorCard
         icon={<OnlineNowIcon />}
         title="Online Now"
-        subtitle="Active visitors on site"
+        subtitle="Active visitors"
         value={visitorStats.onlineNow || 35}
         theme="blue"
       />
