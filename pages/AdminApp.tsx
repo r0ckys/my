@@ -58,7 +58,7 @@ import AIChatAssistant from '../components/AIChatAssistant';
 // Admin Components - directly imported for instant layout render
 import { AdminSidebar, AdminHeader } from '../components/AdminComponents';
 import AdminDueList from './AdminDueList';
-import AdminDashboard from './AdminDashboard';
+import { FigmaDashboardContent as AdminDashboard } from '../components/dashboard';
 
 // Preload critical admin chunks on idle - only when admin view is triggered
 let adminChunksPreloaded = false;

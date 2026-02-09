@@ -2,7 +2,6 @@
 export { default as DashboardHeader } from './DashboardHeader';
 export { default as DashboardSidebar } from './DashboardSidebar';
 export { default as DashboardLayout } from './DashboardLayout';
-export { default as DashboardPage } from './DashboardPage';
 export { default as OrderAnalytics } from './OrderAnalytics';
 export { default as VisitorStats } from './VisitorStats';
 export { default as OrderStatusRow } from './OrderStatusRow';
@@ -24,10 +23,10 @@ export { default as FigmaTopProducts } from './FigmaTopProducts';
 export { default as FigmaAnalyticsChart } from './FigmaAnalyticsChart';
 export { default as FigmaSalesPerformance } from './FigmaSalesPerformance';
 export { default as FigmaSalesByCategory } from './FigmaSalesByCategory';
-export { DashboardDemo, CustomFigmaDashboard } from './DashboardDemo';
 
 // Types
 export * from './types';
 
 // Utilities
 export * from './utils';
+export { default as FigmaDashboardContent } from './FigmaDashboardContent';
