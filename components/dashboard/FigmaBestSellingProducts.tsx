@@ -63,25 +63,25 @@ const FigmaBestSellingProducts: React.FC<FigmaBestSellingProductsProps> = ({
 
   return (
     <div 
-      className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 lg:p-6"
+      className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 hover:shadow-lg transition-shadow duration-300"
       style={{ 
         boxShadow: '0px 2px 9.6px rgba(0, 0, 0, 0.08)',
         fontFamily: 'Poppins, sans-serif'
       }}
     >
       {/* Header with filters */}
-      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 mb-3 sm:mb-4 md:mb-5">
-        <h3 className="text-sm sm:text-base font-semibold text-zinc-800">Best Selling Product</h3>
+      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 mb-3 sm:mb-4 md:mb-5 lg:mb-6">
+        <h3 className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold text-zinc-800">Best Selling Product</h3>
         
         {/* Time filters */}
-        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 overflow-x-auto">
           {filters.map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap ${
+              className={`px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded-md sm:rounded-lg text-[10px] sm:text-xs lg:text-sm font-medium transition-all whitespace-nowrap hover:shadow-sm ${
                 activeFilter === filter
-                  ? 'text-white'
+                  ? 'text-white shadow-md'
                   : 'text-zinc-600 hover:bg-zinc-100'
               }`}
               style={activeFilter === filter ? {
@@ -95,31 +95,31 @@ const FigmaBestSellingProducts: React.FC<FigmaBestSellingProductsProps> = ({
       </div>
       
       {/* Table */}
-      <div className="overflow-x-auto -mx-3 sm:-mx-4 md:-mx-5 lg:-mx-6">
-        <div className="min-w-[360px] px-3 sm:px-4 md:px-5 lg:px-6">
+      <div className="overflow-x-auto -mx-3 sm:-mx-4 md:-mx-5 lg:-mx-6 xl:-mx-8">
+        <div className="min-w-[360px] px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8">
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-200">
                 <th 
-                  className="text-left py-2 sm:py-3 text-xs sm:text-sm font-medium text-zinc-500"
+                  className="text-left py-2 sm:py-3 lg:py-4 text-xs sm:text-sm lg:text-base font-medium text-zinc-500"
                   style={{ fontFamily: 'Lato, sans-serif' }}
                 >
                   Product
                 </th>
                 <th 
-                  className="text-left py-2 sm:py-3 text-xs sm:text-sm font-medium text-zinc-500 hidden xs:table-cell"
+                  className="text-left py-2 sm:py-3 lg:py-4 text-xs sm:text-sm lg:text-base font-medium text-zinc-500 hidden xs:table-cell"
                   style={{ fontFamily: 'Lato, sans-serif' }}
                 >
                   Total Order
                 </th>
                 <th 
-                  className="text-left py-2 sm:py-3 text-xs sm:text-sm font-medium text-zinc-500"
+                  className="text-left py-2 sm:py-3 lg:py-4 text-xs sm:text-sm lg:text-base font-medium text-zinc-500"
                   style={{ fontFamily: 'Lato, sans-serif' }}
                 >
                   Status
                 </th>
                 <th 
-                  className="text-right py-2 sm:py-3 text-xs sm:text-sm font-medium text-zinc-500"
+                  className="text-right py-2 sm:py-3 lg:py-4 text-xs sm:text-sm lg:text-base font-medium text-zinc-500"
                   style={{ fontFamily: 'Lato, sans-serif' }}
                 >
                   Price
@@ -132,44 +132,44 @@ const FigmaBestSellingProducts: React.FC<FigmaBestSellingProductsProps> = ({
                 return (
                   <tr 
                     key={product.id} 
-                    className={index !== products.length - 1 ? 'border-b border-zinc-100' : ''}
+                    className={`hover:bg-zinc-50 transition-colors cursor-pointer ${index !== products.length - 1 ? 'border-b border-zinc-100' : ''}`}
                   >
-                    <td className="py-2 sm:py-3 md:py-4">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-zinc-100 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <td className="py-2 sm:py-3 md:py-4 lg:py-5">
+                      <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-zinc-100 rounded-md sm:rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {product.image ? (
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-xs sm:text-sm text-zinc-400 font-medium">{product.name.charAt(0)}</span>
+                            <span className="text-xs sm:text-sm lg:text-base text-zinc-400 font-medium">{product.name.charAt(0)}</span>
                           )}
                         </div>
                         <span 
-                          className="text-xs sm:text-sm font-medium text-zinc-700 truncate max-w-[80px] sm:max-w-[120px] md:max-w-none"
+                          className="text-xs sm:text-sm lg:text-base font-medium text-zinc-700 truncate max-w-[80px] sm:max-w-[120px] md:max-w-none"
                           style={{ fontFamily: 'Lato, sans-serif' }}
                         >
                           {product.name}
                         </span>
                       </div>
                     </td>
-                    <td className="py-2 sm:py-3 md:py-4 hidden xs:table-cell">
+                    <td className="py-2 sm:py-3 md:py-4 lg:py-5 hidden xs:table-cell">
                       <span 
-                        className="text-xs sm:text-sm text-zinc-600"
+                        className="text-xs sm:text-sm lg:text-base text-zinc-600"
                         style={{ fontFamily: 'Lato, sans-serif' }}
                       >
                         {product.totalOrder}
                       </span>
                     </td>
-                    <td className="py-2 sm:py-3 md:py-4">
+                    <td className="py-2 sm:py-3 md:py-4 lg:py-5">
                       <span 
-                        className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${statusStyles.bg} ${statusStyles.text}`}
+                        className={`inline-flex items-center px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 rounded-full text-[10px] sm:text-xs lg:text-sm font-medium ${statusStyles.bg} ${statusStyles.text}`}
                         style={{ fontFamily: 'Lato, sans-serif' }}
                       >
                         {product.status}
                       </span>
                     </td>
-                    <td className="py-2 sm:py-3 md:py-4 text-right">
+                    <td className="py-2 sm:py-3 md:py-4 lg:py-5 text-right">
                       <span 
-                        className="text-xs sm:text-sm text-zinc-600"
+                        className="text-xs sm:text-sm lg:text-base font-semibold text-zinc-700"
                         style={{ fontFamily: 'Lato, sans-serif' }}
                       >
                         {product.price}
@@ -184,12 +184,12 @@ const FigmaBestSellingProducts: React.FC<FigmaBestSellingProductsProps> = ({
       </div>
       
       {/* Details button */}
-      <div className="mt-3 sm:mt-4 md:mt-5 flex justify-end">
+      <div className="mt-3 sm:mt-4 md:mt-5 lg:mt-6 flex justify-end">
         <button 
-          className="px-4 sm:px-6 py-1.5 sm:py-2 rounded-md sm:rounded-lg border border-sky-400 text-sky-400 hover:bg-sky-50 transition-colors"
+          className="px-4 sm:px-6 lg:px-8 py-1.5 sm:py-2 lg:py-2.5 rounded-md sm:rounded-lg border border-sky-400 text-sky-400 hover:bg-sky-500 hover:text-white hover:border-sky-500 transition-all duration-300 shadow-sm hover:shadow-md"
           style={{ fontFamily: 'Poppins, sans-serif' }}
         >
-          <span className="text-xs sm:text-sm font-medium">Details</span>
+          <span className="text-xs sm:text-sm lg:text-base font-medium">Details</span>
         </button>
       </div>
     </div>
