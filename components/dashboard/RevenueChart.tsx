@@ -1,7 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { RevenueChartProps } from './types';
 
 const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
+  const [isAnimated, setIsAnimated] = useState(false);
+
+  // Check if there's actual data with values
+  const hasData = useMemo(() => {
+    return data && data.length > 0 && data.some(d => (d.revenue || 0) > 0 || (d.costs || 0) > 0);
+  }, [data]);
+
+  useEffect(() => {
+    // Only animate if there's data
+    if (hasData) {
+      const timer = setTimeout(() => setIsAnimated(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [hasData]);
+
+  // Should show curved chart only when animated AND has data
+  const showCurved = isAnimated && hasData;
+
   return (
     <div className="bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-slate-500/10 transition-all">
       <div className="flex items-center justify-between mb-3">
@@ -42,26 +60,38 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
             <line key={i} x1="28" y1={12 + i * 27} x2="295" y2={12 + i * 27} stroke="#F1F5F9" strokeWidth="0.5" />
           ))}
 
-          {/* Sales Area */}
+          {/* Sales Area - Animated from flat to curved when data exists */}
           <path
-            d="M28,95 Q80,55 150,75 T270,35 L270,120 L28,120 Z"
+            d={showCurved 
+              ? "M28,95 Q80,55 150,75 T270,35 L270,120 L28,120 Z" 
+              : "M28,110 Q80,110 150,110 T270,110 L270,120 L28,120 Z"
+            }
             fill="url(#salesGradient)"
+            style={{ transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
           <path
-            d="M28,95 Q80,55 150,75 T270,35"
+            d={showCurved 
+              ? "M28,95 Q80,55 150,75 T270,35" 
+              : "M28,110 Q80,110 150,110 T270,110"
+            }
             fill="none"
             stroke="#3B82F6"
             strokeWidth="2.5"
             strokeLinecap="round"
+            style={{ transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
 
-          {/* Costs Line */}
+          {/* Costs Line - Animated from flat to curved when data exists */}
           <path
-            d="M28,105 Q80,85 150,90 T270,65"
+            d={showCurved 
+              ? "M28,105 Q80,85 150,90 T270,65" 
+              : "M28,110 Q80,110 150,110 T270,110"
+            }
             fill="none"
             stroke="#F87171"
             strokeWidth="2"
             strokeDasharray="5,5"
+            style={{ transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)', transitionDelay: '0.2s' }}
           />
         </svg>
 

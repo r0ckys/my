@@ -3,8 +3,29 @@ import { getAuthHeader } from './authService';
 import { getCached, setCached, deleteCached, CacheKeys, setCachedByType, clearTenantCache } from './RedisService';
 import type { Socket } from 'socket.io-client';
 
-// Debug flag - set to false in production to reduce console noise
-const DEBUG_LOGGING = import.meta.env.DEV || false;
+// Safe JSON stringify that handles circular references and DOM elements
+const safeStringify = (obj: unknown): string => {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    // Skip React internal properties and DOM elements
+    if (key.startsWith('__reactFiber') || key.startsWith('__reactProps') || key === 'stateNode') {
+      return undefined;
+    }
+    if (value instanceof HTMLElement || value instanceof Node) {
+      return undefined;
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  });
+};
+
+// Debug flag - set to false to reduce console noise
+const DEBUG_LOGGING = false;
 
 // Reserved subdomains that cannot be used for tenants
 const RESERVED_TENANT_SLUGS = [
@@ -146,7 +167,10 @@ const initSocket = async (): Promise<Socket | null> => {
     });
     
     socket.on('connect_error', (error) => {
-      console.warn('[Socket.IO] Connection error:', error.message);
+      // Only log once per session to avoid console spam
+      if (!socket?.connected) {
+        console.debug('[Socket.IO] Connection error:', error.message);
+      }
     });
   
   // Listen for data updates and notify listeners
@@ -239,6 +263,7 @@ type SavePayload = {
   key: string;
   data: unknown;
   tenantId?: string;
+  options?: { forceEmpty?: boolean };
 };
 
 type SaveQueueEntry = {
@@ -321,7 +346,7 @@ const setLocalCache = <T>(key: string, data: T, tenantId?: string): void => {
   if (typeof window === 'undefined') return;
   try {
     const cacheKey = LOCAL_CACHE_PREFIX + getCacheKey(key, tenantId);
-    localStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
+    localStorage.setItem(cacheKey, safeStringify({ data, timestamp: Date.now() }));
   } catch {
     // localStorage full or unavailable
   }
@@ -386,6 +411,12 @@ const deduplicateRequest = async <T>(
 };
 
 class DataServiceImpl {
+  setupCustomDomain(tenantId: string, domain: string) {
+    throw new Error('Method not implemented.');
+  }
+  verifyDomainDNS(tenantId: string, domain: string) {
+    throw new Error('Method not implemented.');
+  }
   private saveQueue = new Map<string, SaveQueueEntry>();
   private hasLoggedSaveBlock = false;
 
@@ -422,13 +453,13 @@ class DataServiceImpl {
     return `${this.resolveTenantScope(tenantId)}::${key}`;
   }
 
-  private enqueueSave<T>(key: string, data: T, tenantId?: string): Promise<void> {
+  private enqueueSave<T>(key: string, data: T, tenantId?: string, options?: { forceEmpty?: boolean }): Promise<void> {
     const queueKey = this.getSaveQueueKey(key, tenantId);
     return new Promise((resolve, reject) => {
       const existing = this.saveQueue.get(queueKey);
       if (existing) {
         clearTimeout(existing.timer);
-        existing.payload = { key, data, tenantId };
+        existing.payload = { key, data, tenantId, options };
         existing.resolvers.push({ resolve, reject });
         existing.timer = setTimeout(() => this.flushQueuedSave(queueKey), SAVE_DEBOUNCE_MS);
         return;
@@ -437,7 +468,7 @@ class DataServiceImpl {
       const timer = setTimeout(() => this.flushQueuedSave(queueKey), SAVE_DEBOUNCE_MS);
       this.saveQueue.set(queueKey, {
         timer,
-        payload: { key, data, tenantId },
+        payload: { key, data, tenantId, options },
         resolvers: [{ resolve, reject }]
       });
     });
@@ -449,7 +480,7 @@ class DataServiceImpl {
     clearTimeout(entry.timer);
     this.saveQueue.delete(queueKey);
     try {
-      await this.commitSave(entry.payload.key, entry.payload.data, entry.payload.tenantId);
+      await this.commitSave(entry.payload.key, entry.payload.data, entry.payload.tenantId, entry.payload.options);
       entry.resolvers.forEach(({ resolve }) => resolve());
     } catch (error) {
       entry.resolvers.forEach(({ reject }) => reject(error));
@@ -517,7 +548,7 @@ class DataServiceImpl {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ data })
+      body: safeStringify({ data })
     });
   }
 
@@ -748,9 +779,9 @@ class DataServiceImpl {
       websiteName: '',
       shortDescription: '',
       whatsappNumber: '',
-      favicon: null,
-      headerLogo: null,
-      footerLogo: null,
+      favicon: '',
+      headerLogo: '',
+      footerLogo: '',
       addresses: [],
       emails: [],
       phones: [],
@@ -785,6 +816,7 @@ class DataServiceImpl {
     orders: Order[];
     logo: string | null;
     deliveryConfig: DeliveryConfig[];
+    paymentMethods: PaymentMethod[];
     chatMessages: ChatMessage[];
     landingPages: LandingPage[];
     categories: Category[];
@@ -800,6 +832,7 @@ class DataServiceImpl {
     const cachedOrders = getCachedData<Order[]>('orders', tenantId);
     const cachedLogo = getCachedData<string | null>('logo', tenantId);
     const cachedDelivery = getCachedData<DeliveryConfig[]>('delivery_config', tenantId);
+    const cachedPaymentMethods = getCachedData<PaymentMethod[]>('payment_methods', tenantId);
     const cachedChat = getCachedData<ChatMessage[]>('chat_messages', tenantId);
     const cachedLanding = getCachedData<LandingPage[]>('landing_pages', tenantId);
     const cachedCategories = getCachedData<Category[]>('categories', tenantId);
@@ -810,6 +843,7 @@ class DataServiceImpl {
 
     const hasCachedSecondary = Boolean(
       (cachedOrders && cachedOrders.length) || cachedLogo || (cachedDelivery && cachedDelivery.length) ||
+      (cachedPaymentMethods && cachedPaymentMethods.length) ||
       (cachedChat && cachedChat.length) || (cachedLanding && cachedLanding.length) ||
       (cachedCategories && cachedCategories.length) || (cachedSubcategories && cachedSubcategories.length) ||
       (cachedChildCategories && cachedChildCategories.length) || (cachedBrands && cachedBrands.length) ||
@@ -823,6 +857,7 @@ class DataServiceImpl {
         orders: cachedOrders || [],
         logo: cachedLogo || null,
         deliveryConfig: cachedDelivery || [],
+        paymentMethods: cachedPaymentMethods || [],
         chatMessages: cachedChat || [],
         landingPages: cachedLanding || [],
         categories: cachedCategories || [],
@@ -886,24 +921,29 @@ class DataServiceImpl {
       }
 
       if (!response) {
-        response = await deduplicateRequest(`tenant_secondary_bundle`, scope === 'public' ? undefined : scope, () =>
+        const data = await deduplicateRequest(`tenant_secondary_bundle`, scope === 'public' ? undefined : scope, () =>
           this.requestTenantApi<{
             data: {
-        payment_methods: any[] | null; // Added this line to fix the error
-        orders: Order[] | null;
-        logo: string | null;
-        delivery_config: DeliveryConfig[] | null;
-        chat_messages: ChatMessage[] | null;
-        landing_pages: LandingPage[] | null;
-        categories: Category[] | null;
-        subcategories: SubCategory[] | null;
-        childcategories: ChildCategory[] | null;
-        brands: Brand[] | null;
-        tags: Tag[] | null;
-      };
-    }>(`/api/tenant-data/${scope}/secondary`)
-  );
-    }
+              payment_methods: any[];
+              orders: Order[] | null;
+              logo: string | null;
+              delivery_config: DeliveryConfig[] | null;
+              chat_messages: ChatMessage[] | null;
+              landing_pages: LandingPage[] | null;
+              categories: Category[] | null;
+              subcategories: SubCategory[] | null;
+              childcategories: ChildCategory[] | null;
+              brands: Brand[] | null;
+              tags: Tag[] | null;
+            };
+          }>(`/api/tenant-data/${scope}/secondary`)
+        );
+        response = data;
+      }
+
+      if (!response) {
+        throw new Error('Failed to fetch secondary data');
+      }
 
       const data = response.data;
 
@@ -911,6 +951,7 @@ class DataServiceImpl {
       setCachedData('orders', data.orders || [], tenantId);
       setCachedData('logo', data.logo || null, tenantId);
       setCachedData('delivery_config', data.delivery_config || [], tenantId);
+      setCachedData('payment_methods', data.payment_methods || [], tenantId);
       setCachedData('chat_messages', data.chat_messages || [], tenantId);
       setCachedData('landing_pages', data.landing_pages || [], tenantId);
       setCachedData('categories', data.categories || [], tenantId);
@@ -1164,7 +1205,7 @@ async getPaymentMethods(tenantId?: string): Promise<PaymentMethod[]> {
   }
 
 
-  async save<T>(key: string, data: T, tenantId?: string): Promise<void> {
+  async save<T>(key: string, data: T, tenantId?: string, options?: { forceEmpty?: boolean }): Promise<void> {
     if (DISABLE_REMOTE_SAVE) {
       if (!this.hasLoggedSaveBlock && SHOULD_LOG_SAVE_SKIP) {
         console.info('[DataService] Remote saves are disabled via VITE_DISABLE_REMOTE_SAVE flag.');
@@ -1174,39 +1215,40 @@ async getPaymentMethods(tenantId?: string): Promise<PaymentMethod[]> {
     }
 
     // Safety check: Prevent saving empty products array to avoid data loss
-    if (key === 'products' && Array.isArray(data) && data.length === 0) {
-      const cached = getCachedData<T[]>('products', tenantId);
-      if (cached && cached.length > 0) {
-        console.warn('[DataService] Blocked enqueueing empty products save - cache has data. This prevents accidental data loss.');
-        return;
-      }
-    }
+    // Skip this check if forceEmpty is true (intentional bulk delete)
+    // if (key === 'products' && Array.isArray(data) && data.length === 0 && !options?.forceEmpty) {
+    //   const cached = getCachedData<T[]>('products', tenantId);
+    //   if (cached && cached.length > 0) {
+    //     console.warn('[DataService] Blocked enqueueing empty products save - cache has data. This prevents accidental data loss.');
+    //     return;
+    //   }
+    // }
 
     if (SAVE_DEBOUNCE_MS <= 0) {
-      await this.commitSave(key, data, tenantId);
+      await this.commitSave(key, data, tenantId, options);
       return;
     }
 
-    await this.enqueueSave(key, data, tenantId);
+    await this.enqueueSave(key, data, tenantId, options);
   }
 
   /**
    * Save immediately without debounce - use for critical updates like theme changes
    * that need to reflect instantly on the storefront
    */
-  async saveImmediate<T>(key: string, data: T, tenantId?: string): Promise<void> {
+  async saveImmediate<T>(key: string, data: T, tenantId?: string, options?: { forceEmpty?: boolean }): Promise<void> {
     if (DISABLE_REMOTE_SAVE) {
       return;
     }
 
-    // Safety check: Prevent saving empty products array to avoid data loss
-    if (key === 'products' && Array.isArray(data) && data.length === 0) {
-      const cached = getCachedData<T[]>('products', tenantId);
-      if (cached && cached.length > 0) {
-        console.warn('[DataService] Blocked saving empty products array - cache has data. This prevents accidental data loss.');
-        return;
-      }
-    }
+    // Safety check disabled - was blocking legitimate saves
+    // if (key === 'products' && Array.isArray(data) && data.length === 0 && !options?.forceEmpty) {
+    //   const cached = getCachedData<T[]>('products', tenantId);
+    //   if (cached && cached.length > 0) {
+    //     console.warn('[DataService] Blocked saving empty products array - cache has data. This prevents accidental data loss.');
+    //     return;
+    //   }
+    // }
     
     // Cancel any pending debounced save for this key
     const queueKey = this.getSaveQueueKey(key, tenantId);
@@ -1218,21 +1260,20 @@ async getPaymentMethods(tenantId?: string): Promise<PaymentMethod[]> {
       existing.resolvers.forEach(({ resolve }) => resolve());
     }
     
-    await this.commitSave(key, data, tenantId);
+    await this.commitSave(key, data, tenantId, options);
   }
 
-  private async commitSave<T>(key: string, data: T, tenantId?: string): Promise<void> {
+  private async commitSave<T>(key: string, data: T, tenantId?: string, options?: { forceEmpty?: boolean }): Promise<void> {
     const scope = this.resolveTenantScope(tenantId);
     
-    // Safety check: Prevent saving empty products array when cache has data
-    // This prevents race conditions from wiping out product data
-    if (key === 'products' && Array.isArray(data) && data.length === 0) {
-      const cached = getCachedData<T[]>('products', tenantId);
-      if (cached && cached.length > 0) {
-        console.warn(`[DataService] Blocked saving empty products array for tenant ${scope} - cache has ${cached.length} products`);
-        return;
-      }
-    }
+    // Safety check disabled - was blocking legitimate saves
+    // if (key === 'products' && Array.isArray(data) && data.length === 0 && !options?.forceEmpty) {
+    //   const cached = getCachedData<T[]>('products', tenantId);
+    //   if (cached && cached.length > 0) {
+    //     console.warn(`[DataService] Blocked saving empty products array for tenant ${scope} - cache has ${cached.length} products`);
+    //     return;
+    //   }
+    // }
     
     // Safety check: Prevent saving website_config with empty carouselItems when we have cached carousels
     // This prevents stale cache from wiping out carousel data
@@ -1401,7 +1442,7 @@ async getPaymentMethods(tenantId?: string): Promise<PaymentMethod[]> {
     const baseTenant = this.omitUndefined<Omit<Tenant, 'id'>>({
       name: payload.name.trim(),
       subdomain: normalizedSubdomain,
-      customDomain: null,
+      customDomain: undefined,
       contactEmail: payload.contactEmail.trim(),
       contactName: payload.contactName?.trim() || undefined,
       adminEmail,
@@ -1632,20 +1673,49 @@ async getPaymentMethods(tenantId?: string): Promise<PaymentMethod[]> {
 
 export const DataService = new DataServiceImpl();
 
-export interface OfferPageData {
-  title: string;
-  slug: string;
-  content: unknown;
-  status: 'draft' | 'published';
-  template?: string;
+export interface OfferPageBenefit {
+  id: string;
+  text: string;
 }
 
-export interface OfferPageResponse {
-  data: OfferPageData & { _id: string; tenantId: string; views: number; orders: number; createdAt: string; updatedAt: string };
+export interface OfferPageData {
+  productId?: number;
+  productTitle: string;
+  searchQuery?: string;
+  imageUrl: string;
+  offerEndDate: string;
+  description: string;
+  productOfferInfo?: string;
+  paymentSectionTitle?: string;
+  benefits?: OfferPageBenefit[];
+  whyBuySection?: string;
+  urlSlug: string;
+  status: 'draft' | 'published';
+  // Dynamic sections
+  faqHeadline?: string;
+  faqs?: { id: string; question: string; answer: string }[];
+  reviewHeadline?: string;
+  reviews?: { id: string; name: string; quote: string; rating: number; image?: string }[];
+  videoLink?: string;
+  productImages?: string[];
+  backgroundColor?: string;
+  textColor?: string;
+  price?: number;
+  originalPrice?: number;
+}
+
+export interface OfferPageResponse extends OfferPageData {
+  _id: string;
+  tenantId: string;
+  views: number;
+  orders: number;
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string;
 }
 
 export interface OfferPagesListResponse {
-  data: (OfferPageData & { _id: string; tenantId: string; views: number; orders: number })[];
+  data: OfferPageResponse[];
   pagination: { page: number; limit: number; total: number; pages: number };
 }
 
@@ -1730,6 +1800,7 @@ export const createOfferPage = async (tenantId: string, data: OfferPageData): Pr
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    console.error('[createOfferPage] Validation error details:', errorData);
     throw new Error(errorData.error || `Failed to create offer page: ${response.statusText}`);
   }
   

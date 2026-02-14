@@ -71,6 +71,8 @@ const translationsEn: Record<string, string> = {
   'visits': 'Visits',
   'revenue': 'Revenue',
   'language': 'Language',
+  'reserved_price': 'Reserved Price',
+  'to_be_reviewed': 'To be Reviewed',
   
   // Order Status
   'pending': 'Pending',
@@ -164,6 +166,8 @@ const translationsBn: Record<string, string> = {
   'visits': 'ভিজিট',
   'revenue': 'আয়',
   'language': 'ভাষা',
+  'reserved_price': 'সংরক্ষিত মূল্য',
+  'to_be_reviewed': 'পর্যালোচনা করতে হবে',
   
   // Order Status
   'pending': 'অপেক্ষমাণ',

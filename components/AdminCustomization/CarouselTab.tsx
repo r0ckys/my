@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   Image as ImageIcon,
   Plus,
@@ -10,7 +10,10 @@ import {
   X,
   Upload,
   Loader2,
-  FolderOpen
+  FolderOpen,
+  Eye,
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CarouselItem, WebsiteConfig, CarouselFilterStatus, ImageUploadType } from './types';
@@ -71,6 +74,18 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
   // Gallery Picker State
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
   const [galleryPickerTarget, setGalleryPickerTarget] = useState<'carousel' | 'carouselMobile' | null>(null);
+
+  // Preview State
+  const [selectedCarousel, setSelectedCarousel] = useState<CarouselItem | null>(null);
+  const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('desktop');
+
+  // Auto-select first carousel when items change
+  useEffect(() => {
+    const items = websiteConfiguration.carouselItems || [];
+    if (!selectedCarousel && items.length > 0) {
+      setSelectedCarousel(items[0]);
+    }
+  }, [websiteConfiguration.carouselItems]);
 
   // File Input Refs
   const carouselDesktopInputRef = useRef<HTMLInputElement>(null);
@@ -282,11 +297,14 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <>
+      <div className="flex gap-4">
+        {/* Main Content */}
+        <div className="flex-1 space-y-2 sm:space-y-3">
       {/* Filters and Search */}
-      <div className="flex flex-col gap-3 sm:gap-4">
+      <div className="flex flex-col gap-2 sm:gap-3">
         {/* Status Filters - Scrollable on mobile */}
-        <div className="flex bg-gray-100 rounded-lg p-1 overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-1">
+        <div className="flex bg-gray-100 rounded-lg p-0.5 overflow-x-auto scrollbar-hide">
           {(['All', 'Publish', 'Draft', 'Trash'] as CarouselFilterStatus[]).map((status) => (
             <button
               key={status}
@@ -308,20 +326,20 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
         </div>
         
         {/* Search and Add Button */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full">
+        <div className="flex flex-col sm:flex-row gap-2 w-full">
           <div className="relative flex-1">
             <input
               type="text"
               placeholder="Search"
-              className="w-full pl-10 pr-4 py-2 bg-white border rounded-lg text-sm focus:ring-1 focus:ring-green-500"
+              className="w-full pl-9 pr-3 py-1.5 bg-white border rounded-lg text-sm focus:ring-1 focus:ring-green-500"
               value={carouselSearchQuery}
               onChange={(e) => setCarouselSearchQuery(e.target.value)}
             />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-2 text-gray-400" size={14} />
           </div>
           <ActionButton
             onClick={() => openCarouselModal()}
-            variant="bg-green-600 text-white hover:from-[#2BAEE8] hover:to-[#1A7FE8] flex items-center gap-2 justify-center w-full sm:w-auto"
+            variant="bg-gradient-to-r from-[#38BDF8] to-[#1E90FF] text-white hover:from-[#2BAEE8] hover:to-[#1A7FE8] flex items-center gap-2 justify-center flex-1 sm:flex-none"
           >
             <Plus size={16} />
             <span className="hidden xs:inline">Add</span> Carousel
@@ -336,26 +354,30 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-700 font-semibold text-xs uppercase border-b">
               <tr>
-                <th className="px-4 py-3 w-10">
+                <th className="px-3 py-2 w-10">
                   <input type="checkbox" className="rounded" />
                 </th>
-                <th className="px-4 py-3">Image</th>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Url</th>
-                <th className="px-4 py-3">Url Type</th>
-                <th className="px-4 py-3">Serial</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-3 py-2">Image</th>
+                <th className="px-3 py-2">Name</th>
+                <th className="px-3 py-2">Url</th>
+                <th className="px-3 py-2">Url Type</th>
+                <th className="px-3 py-2">Serial</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredCarouselItems.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 group">
-                  <td className="px-4 py-3">
-                    <input type="checkbox" className="rounded" />
+                <tr 
+                  key={item.id} 
+                  onClick={() => setSelectedCarousel(item)}
+                  className={`hover:bg-gray-50 group cursor-pointer ${selectedCarousel?.id === item.id ? 'bg-green-50 border-l-4 border-l-green-500' : ''}`}
+                >
+                  <td className="px-3 py-2">
+                    <input type="checkbox" className="rounded" onClick={(e) => e.stopPropagation()} />
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="w-16 h-10 bg-gray-100 rounded border overflow-hidden">
+                  <td className="px-3 py-2">
+                    <div className="w-14 h-8 bg-gray-100 rounded border overflow-hidden">
                       {item.image ? (
                         <img
                           src={normalizeImageUrl(item.image)}
@@ -364,16 +386,16 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <ImageIcon size={16} />
+                          <ImageIcon size={14} />
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{item.name}</td>
-                  <td className="px-4 py-3 text-gray-500 max-w-xs truncate">{item.url}</td>
-                  <td className="px-4 py-3 text-gray-500">{item.urlType}</td>
-                  <td className="px-4 py-3 font-mono">{item.serial}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 font-medium text-gray-800">{item.name}</td>
+                  <td className="px-3 py-2 text-gray-500 max-w-xs truncate">{item.url}</td>
+                  <td className="px-3 py-2 text-gray-500">{item.urlType}</td>
+                  <td className="px-3 py-2 font-mono">{item.serial}</td>
+                  <td className="px-3 py-2">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                         item.status === 'Publish'
@@ -384,19 +406,19 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100">
+                  <td className="px-3 py-2 text-right">
+                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100">
                       <button
                         onClick={() => openCarouselModal(item)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                       >
-                        <Edit size={16} />
+                        <Edit size={14} />
                       </button>
                       <button
                         onClick={() => handleDeleteCarousel(item.id)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -404,8 +426,8 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
               ))}
               {filteredCarouselItems.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-400">
-                    <ImageIcon size={32} className="mx-auto mb-2 opacity-50" />
+                  <td colSpan={8} className="text-center py-8 text-gray-400">
+                    <ImageIcon size={28} className="mx-auto mb-1 opacity-50" />
                     No carousel items found.
                   </td>
                 </tr>
@@ -417,15 +439,19 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
         {/* Mobile Card View */}
         <div className="md:hidden divide-y divide-gray-100">
           {filteredCarouselItems.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <ImageIcon size={32} className="mx-auto mb-2 opacity-50" />
+            <div className="text-center py-8 text-gray-400">
+              <ImageIcon size={28} className="mx-auto mb-1 opacity-50" />
               No carousel items found.
             </div>
           ) : (
             filteredCarouselItems.map((item) => (
-              <div key={item.id} className="p-4 hover:bg-gray-50">
-                <div className="flex gap-3">
-                  <div className="w-20 h-12 bg-gray-100 rounded border overflow-hidden flex-shrink-0">
+              <div 
+                key={item.id} 
+                onClick={() => setSelectedCarousel(item)}
+                className={`p-3 hover:bg-gray-50 cursor-pointer ${selectedCarousel?.id === item.id ? 'bg-green-50 border-l-4 border-l-green-500' : ''}`}
+              >
+                <div className="flex gap-2">
+                  <div className="w-16 h-10 bg-gray-100 rounded border overflow-hidden flex-shrink-0">
                     {item.image ? (
                       <img
                         src={normalizeImageUrl(item.image)}
@@ -487,6 +513,161 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
           <button disabled className="px-2 py-1 bg-gray-50 text-gray-400">
             <ChevronRight size={16} />
           </button>
+        </div>
+      </div>
+      </div>
+
+        {/* Preview Panel */}
+        <div className="hidden xl:block w-80 flex-shrink-0">
+          <div className="sticky top-4 border rounded-lg shadow-sm bg-white overflow-hidden">
+            <div className="p-3 border-b bg-gray-50 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                <Eye size={16} />
+                Preview
+              </h3>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setPreviewDevice('mobile')}
+                  className={`p-1.5 rounded ${previewDevice === 'mobile' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  title="Mobile View"
+                >
+                  <Smartphone size={16} />
+                </button>
+                <button
+                  onClick={() => setPreviewDevice('desktop')}
+                  className={`p-1.5 rounded ${previewDevice === 'desktop' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  title="Desktop View"
+                >
+                  <Monitor size={16} />
+                </button>
+              </div>
+            </div>
+            
+            {selectedCarousel ? (
+              <div className="p-3">
+                {/* Device Frame Preview */}
+                <div className={`mx-auto bg-gray-900 rounded-2xl p-1.5 ${previewDevice === 'mobile' ? 'w-44' : 'w-full'}`}>
+                  <div className="bg-white rounded-lg overflow-hidden">
+                    {/* Browser/Phone Header */}
+                    <div className={`bg-gray-100 ${previewDevice === 'mobile' ? 'px-2 py-1' : 'px-2 py-1.5'} flex items-center gap-1`}>
+                      {previewDevice === 'mobile' ? (
+                        <div className="w-6 h-0.5 bg-gray-300 rounded-full mx-auto"></div>
+                      ) : (
+                        <>
+                          <div className="flex gap-0.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                          </div>
+                          <div className="flex-1 mx-1">
+                            <div className="bg-white rounded px-1.5 py-0.5 text-[6px] text-gray-400 text-center truncate">yourstore.com</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Mini Store Header */}
+                    <div className={`bg-white border-b ${previewDevice === 'mobile' ? 'px-1.5 py-1' : 'px-2 py-1.5'} flex items-center justify-between`}>
+                      <div className={`font-bold text-gray-800 ${previewDevice === 'mobile' ? 'text-[6px]' : 'text-[8px]'}`}>🏪 Store</div>
+                      <div className="flex gap-1">
+                        <div className={`bg-gray-100 rounded ${previewDevice === 'mobile' ? 'w-8 h-2' : 'w-12 h-2.5'}`}></div>
+                        <div className={`bg-pink-500 rounded ${previewDevice === 'mobile' ? 'w-3 h-2' : 'w-4 h-2.5'}`}></div>
+                      </div>
+                    </div>
+
+                    {/* Mini Nav */}
+                    <div className={`bg-gray-50 border-b flex gap-1 ${previewDevice === 'mobile' ? 'px-1 py-0.5' : 'px-2 py-1'}`}>
+                      {['Home', 'Categories', 'Products'].map(item => (
+                        <div key={item} className={`text-gray-500 ${previewDevice === 'mobile' ? 'text-[4px]' : 'text-[6px]'}`}>{item}</div>
+                      ))}
+                    </div>
+
+                    {/* Carousel Banner Area - Main Content */}
+                    <div className={`${previewDevice === 'mobile' ? 'p-1' : 'p-1.5'}`}>
+                      {/* Carousel Banner */}
+                      <div className="relative">
+                        {(() => {
+                          const imageUrl = previewDevice === 'mobile' && selectedCarousel.mobileImage 
+                            ? selectedCarousel.mobileImage 
+                            : selectedCarousel.image;
+                          return imageUrl ? (
+                            <img
+                              src={normalizeImageUrl(imageUrl)}
+                              alt={selectedCarousel.name}
+                              className={`w-full object-cover rounded ${previewDevice === 'mobile' ? 'h-20' : 'h-24'}`}
+                            />
+                          ) : (
+                            <div className={`w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded flex items-center justify-center ${previewDevice === 'mobile' ? 'h-20' : 'h-24'}`}>
+                              <span className={`text-white font-bold ${previewDevice === 'mobile' ? 'text-[8px]' : 'text-xs'}`}>{selectedCarousel.name}</span>
+                            </div>
+                          );
+                        })()}
+                        {/* Carousel dots indicator */}
+                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-white/50"></div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-white/50"></div>
+                        </div>
+                      </div>
+
+                      {/* Categories Row */}
+                      <div className="mt-1.5">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className={`font-semibold text-gray-700 ${previewDevice === 'mobile' ? 'text-[5px]' : 'text-[7px]'}`}>Categories</span>
+                          <span className={`text-pink-500 ${previewDevice === 'mobile' ? 'text-[4px]' : 'text-[5px]'}`}>View All →</span>
+                        </div>
+                        <div className="flex gap-0.5 overflow-hidden">
+                          {['🎮', '📱', '💻', '🎧', '⌚'].map((icon, i) => (
+                            <div key={i} className={`bg-gray-100 rounded flex items-center justify-center flex-shrink-0 ${previewDevice === 'mobile' ? 'w-5 h-5 text-[8px]' : 'w-6 h-6 text-[10px]'}`}>
+                              {icon}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Carousel Info */}
+                <div className="mt-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Status:</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${selectedCarousel.status === 'Publish' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {selectedCarousel.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Serial:</span>
+                    <span className="text-gray-700">{selectedCarousel.serial}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">URL Type:</span>
+                    <span className="text-gray-700">{selectedCarousel.urlType || 'None'}</span>
+                  </div>
+                  {selectedCarousel.url && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">URL:</span>
+                      <span className="text-gray-700 truncate max-w-[120px]" title={selectedCarousel.url}>{selectedCarousel.url}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Edit Button */}
+                <button
+                  onClick={() => openCarouselModal(selectedCarousel)}
+                  className="w-full mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
+                >
+                  <Edit size={16} />
+                  Edit Carousel
+                </button>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-gray-400">
+                <ImageIcon size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Select a carousel to preview</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -599,7 +780,7 @@ export const CarouselTab: React.FC<CarouselTabProps> = ({
         onSelect={handleGallerySelect}
         title={`Choose ${galleryPickerTarget === 'carousel' ? 'Desktop Banner' : 'Mobile Banner'} from Gallery`}
       />
-    </div>
+    </>
   );
 };
 

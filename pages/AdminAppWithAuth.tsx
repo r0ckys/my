@@ -2,10 +2,13 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 
 import * as authService from '../services/authService';
-import { User, Tenant, Order, Product, ThemeConfig, WebsiteConfig, DeliveryConfig, CourierConfig, FacebookPixelConfig, ChatMessage } from '../types';
+import { User, Tenant, Order, Product, ThemeConfig, WebsiteConfig, DeliveryConfig, CourierConfig, FacebookPixelConfig, ChatMessage, PaymentMethod } from '../types';
 import { Loader2 } from 'lucide-react';
 
 import AdminApp from './AdminApp';
+
+// Lazy load AdminLogin outside component
+const AdminLogin = lazy(() => import('./AdminLogin'));
 
 // Permission map type
 type PermissionMap = Record<string, string[]>;
@@ -16,7 +19,7 @@ interface AdminAppWithAuthProps {
   orders: Order[];
   products: Product[];
   logo: string | null;
-  themeConfig: ThemeConfig;
+  themeConfig: ThemeConfig | null;
   websiteConfig?: WebsiteConfig;
   deliveryConfig: DeliveryConfig[];
   courierConfig: CourierConfig;
@@ -30,6 +33,7 @@ interface AdminAppWithAuthProps {
   onDeleteProduct: (id: number) => void;
   onBulkDeleteProducts: (ids: number[]) => void;
   onBulkUpdateProducts: (ids: number[], updates: Partial<Product>) => void;
+  onBulkFlashSale: (ids: number[], action: 'add' | 'remove') => void;
   onUpdateLogo: (logo: string | null) => void;
   onUpdateTheme: (config: ThemeConfig) => Promise<void>;
   onUpdateWebsiteConfig: (config: WebsiteConfig) => Promise<void>;
@@ -46,6 +50,17 @@ interface AdminAppWithAuthProps {
   onCreateLandingPage: (page: any) => void;
   onUpsertLandingPage: (page: any) => void;
   onToggleLandingPublish: (pageId: string, status: string) => void;
+  // Order management
+  onAddOrder?: (order: Order) => void;
+  // Payment methods
+  paymentMethods?: PaymentMethod[];
+  onUpdatePaymentMethods?: (methods: PaymentMethod[]) => void;
+  // Tenant management
+  onCreateTenant?: (payload: any, options?: { activate?: boolean }) => Promise<any>;
+  onDeleteTenant?: (tenantId: string) => Promise<void>;
+  onRefreshTenants?: () => Promise<any>;
+  onUpdateFacebookPixelConfig?: (config: FacebookPixelConfig) => void;
+  onUpdateChatMessages?: (messages: ChatMessage[]) => void;
 }
 
 const AdminAppWithAuth: React.FC<AdminAppWithAuthProps> = (props) => {
@@ -154,8 +169,7 @@ const AdminAppWithAuth: React.FC<AdminAppWithAuthProps> = (props) => {
   }
 
   // Show login if not authenticated
-  if (!isAuthenticated) {
-    const AdminLogin = lazy(() => import('./AdminLogin'));
+  if (isAuthenticated === false) {
     return (
       <Suspense fallback={null}>
         <AdminLogin onLoginSuccess={handleLoginSuccess} />
@@ -173,11 +187,12 @@ const AdminAppWithAuth: React.FC<AdminAppWithAuthProps> = (props) => {
       }
     >
       <AdminApp
-        {...props}
-        user={user}
-        userPermissions={userPermissions}
-        onLogout={handleLogout}
-      />
+      onRefreshTenants={function (): Promise<Tenant[]> {
+        throw new Error('Function not implemented.');
+      } } isTenantCreating={false} deletingTenantId={null} {...props}
+      user={user}
+      userPermissions={userPermissions}
+      onLogout={handleLogout}      />
     </Suspense>
   );
 };

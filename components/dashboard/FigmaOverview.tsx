@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 // Icon URLs
 const ICON_URLS = {
@@ -6,83 +6,67 @@ const ICON_URLS = {
   totalOrder: 'https://hdnfltv.com/image/nitimages/lets-icons_order-light__2_.webp',
   lowStock: 'https://hdnfltv.com/image/nitimages/hugeicons_hot-price__5_.webp',
   totalAmount: 'https://hdnfltv.com/image/nitimages/solar_tag-price-linear__2_.webp',
-  toReview: 'https://hdnfltv.com/image/nitimages/mage_preview__1_.webp'
+  toReview: 'https://hdnfltv.com/image/nitimages/mage_preview__1_.webp',
+  totalStock: 'https://hdnfltv.com/image/nitimages/lets-icons_order-light__2_.webp'
 };
 
 interface StatCardProps {
   title: string;
   value: string | number;
   iconUrl: string;
-  iconBg: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, iconUrl, iconBg }) => {
+const StatCard: React.FC<StatCardProps> = ({ title, value, iconUrl }) => {
   return (
-    <div className="bg-[#F5F5F5] rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 flex-1 min-w-[100px] sm:min-w-[120px] hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer group">
-      <div className="flex items-center justify-between h-full gap-1.5 sm:gap-2 lg:gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors" style={{ fontFamily: 'Poppins, sans-serif' }}>{value}</div>
-          <div className="text-[10px] sm:text-xs lg:text-sm text-gray-500 truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>{title}</div>
-        </div>
-        <div className={`w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow`}>
-          <img src={iconUrl} alt={title} className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 object-contain" />
-        </div>
+    <div className="bg-[#F5F5F5] dark:bg-gray-700 h-[68px] rounded-lg overflow-hidden flex items-center justify-between px-4">
+      <div className="flex flex-col justify-center">
+        <div className="text-black dark:text-white text-[28px] font-medium font-['Poppins'] leading-tight">{value}</div>
+        <div className="text-black dark:text-gray-300 text-[13px] font-normal font-['Poppins']">{title}</div>
+      </div>
+      <div className="w-11 h-11 bg-white dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm">
+        <img src={iconUrl} alt={title} className="w-8 h-8 object-contain" />
       </div>
     </div>
   );
 };
 
-interface LanguageSelectorProps {
+// Combined Language and Date display component
+const LanguageDateCard: React.FC<{
   currentLang: string;
   onLangChange: (lang: string) => void;
-}
-
-const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang, onLangChange }) => {
-  return (
-    <div className="bg-[#F5F5F5] rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 flex-1 min-w-[100px] sm:min-w-[120px] flex flex-col justify-center hover:shadow-md transition-shadow duration-300">
-      <div className="text-[10px] sm:text-xs lg:text-sm text-gray-500 mb-1 sm:mb-1.5 lg:mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Language</div>
-      <div className="flex items-center gap-0.5 sm:gap-1 bg-white rounded-full p-0.5 w-fit shadow-sm">
-        <button 
-          onClick={() => onLangChange('en')}
-          className={`px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[10px] sm:text-xs lg:text-sm rounded-full transition-all duration-200 ${
-            currentLang === 'en' 
-              ? 'bg-gradient-to-r from-sky-400 to-blue-500 text-white font-medium shadow-sm' 
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-          }`}
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          Eng
-        </button>
-        <button 
-          onClick={() => onLangChange('bn')}
-          className={`px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 lg:py-1.5 text-[10px] sm:text-xs lg:text-sm rounded-full transition-all duration-200 ${
-            currentLang === 'bn' 
-              ? 'bg-gradient-to-r from-sky-400 to-blue-500 text-white font-medium shadow-sm' 
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-          }`}
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          বাংলা
-        </button>
-      </div>
-    </div>
-  );
-};
-
-interface DateDisplayProps {
   date: string;
   dayName: string;
-}
-
-const DateDisplay: React.FC<DateDisplayProps> = ({ date, dayName }) => {
+}> = ({ currentLang, onLangChange, date, dayName }) => {
   return (
-    <div className="bg-[#F5F5F5] rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 flex-1 min-w-[80px] sm:min-w-[100px] flex flex-col relative overflow-hidden hover:shadow-md transition-shadow duration-300">
-      <div className="absolute -top-6 sm:-top-8 lg:-top-10 -right-4 sm:-right-6 lg:-right-8 w-16 sm:w-24 lg:w-32 h-16 sm:h-24 lg:h-32 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 opacity-90" />
-      <div className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5 sm:mb-1 lg:mb-2 relative z-10" style={{ fontFamily: 'Poppins, sans-serif' }}>{date}</div>
-      <div className="flex items-center justify-center mt-auto relative z-10">
-        <div className="px-2 sm:px-4 lg:px-6 py-1 sm:py-1.5 lg:py-2 bg-gradient-to-r from-sky-400 to-blue-500 rounded-md sm:rounded-lg shadow-md hover:shadow-lg transition-shadow">
-          <span className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>{dayName}</span>
+    <div className="flex gap-4 w-full col-span-2 sm:col-span-1">
+      {/* Language Selector - exact Figma design */}
+      <div className="bg-[#F5F5F5] dark:bg-gray-700 w-[122px] h-[68px] relative rounded-lg overflow-hidden flex-shrink-0">
+        <div className="left-[16px] top-[10px] absolute text-black dark:text-gray-300 text-[13px] font-normal font-['Poppins']">Language</div>
+        <div className="w-[92px] h-[26px] left-[16px] top-[32px] absolute rounded-3xl border border-gray-300 dark:border-gray-500 overflow-hidden">
+          <button 
+            onClick={() => onLangChange('en')}
+            className={`w-[43px] h-[18px] left-[4px] top-[4px] absolute rounded-[20px] overflow-hidden transition-all ${
+              currentLang === 'en' ? 'bg-white dark:bg-gray-500 shadow-sm' : 'bg-transparent'
+            }`}
+          >
+            <span className="left-[11px] top-[3px] absolute text-black dark:text-white text-[10px] font-normal font-['Poppins']">Eng</span>
+          </button>
+          <button 
+            onClick={() => onLangChange('bn')}
+            className={`w-[43px] h-[18px] right-[2px] top-[4px] absolute rounded-[20px] overflow-hidden transition-all ${
+              currentLang === 'bn' ? 'bg-white dark:bg-gray-500 shadow-sm' : 'bg-transparent'
+            }`}
+          >
+            <span className="left-[7px] top-[3px] absolute text-black dark:text-white text-[10px] font-normal font-['Poppins']">বাংলা</span>
+          </button>
         </div>
+      </div>
+      
+      {/* Date Display - exact Figma design */}
+      <div className="w-[122px] h-[68px] relative bg-[#F5F5F5] dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
+        <div className="w-40 h-40 left-[26px] top-[22px] absolute bg-gradient-to-r from-sky-400 to-blue-500 rounded-full" />
+        <div className="left-[10px] top-[10px] absolute text-black dark:text-white text-[15px] font-medium font-['Poppins'] z-10">{date}</div>
+        <div className="left-[67px] top-[34px] absolute text-white text-2xl font-medium font-['Poppins'] z-10">{dayName}</div>
       </div>
     </div>
   );
@@ -90,14 +74,29 @@ const DateDisplay: React.FC<DateDisplayProps> = ({ date, dayName }) => {
 
 interface NotificationCardProps {
   title: string;
+  images?: string[];
 }
 
-const NotificationCard: React.FC<NotificationCardProps> = ({ title }) => {
+const NotificationCard: React.FC<NotificationCardProps> = ({ title, images }) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Sample notification images if none provided
+  const sampleImages = images || [
+    'https://hdnfltv.com/image/nitimages/pasted_1770753032030.webp',
+  ];
+
   return (
-    <div className="bg-[#F5F5F5] rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 flex-[1.5] min-w-[120px] sm:min-w-[150px] flex flex-col hover:shadow-md transition-shadow duration-300">
-      <div className="text-[10px] sm:text-xs lg:text-sm text-gray-500 mb-1 sm:mb-2 lg:mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{title}</div>
-      <div className="bg-white rounded-md sm:rounded-lg h-8 sm:h-10 lg:h-12 flex items-center justify-center overflow-hidden flex-1 border border-dashed border-gray-200 hover:border-blue-300 transition-colors cursor-pointer">
-        <span className="text-gray-400 text-[10px] sm:text-xs lg:text-sm">Notification Banner</span>
+    <div className="w-full h-full min-h-[144px] relative bg-stone-50 dark:bg-gray-700 rounded-xl overflow-hidden p-4">
+      <div className="text-black dark:text-white text-sm font-medium font-['Poppins'] mb-3">Important Notification</div>
+      <div className="w-full h-24 bg-white dark:bg-gray-600 rounded-lg overflow-hidden flex items-center justify-center">
+        <img 
+          className="w-full h-full object-contain p-2" 
+          src="https://hdnfltv.com/image/nitimages/pasted_1770753032030.webp" 
+          alt="Notification"
+        />
+      </div>
+      <div className="flex justify-center items-center gap-1 mt-3">
+        <div className="w-5 h-2 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full" />
       </div>
     </div>
   );
@@ -110,77 +109,93 @@ interface FigmaOverviewProps {
     totalAmount?: string;
     lowStock?: number;
     toReview?: number;
+    totalStock?: number;
   };
   currentLang?: string;
   onLangChange?: (lang: string) => void;
+  notificationImages?: string[];
 }
 
 const FigmaOverview: React.FC<FigmaOverviewProps> = ({
   stats = {
-    totalProducts: 45,
-    totalOrders: 6550,
-    totalAmount: '৳8,35,500',
-    lowStock: 5,
-    toReview: 452
+    totalProducts: 0,
+    totalOrders: 0,
+    totalAmount: '৳0',
+    lowStock: 0,
+    toReview: 0,
+    totalStock: 0
   },
   currentLang = 'en',
-  onLangChange = () => {}
+  onLangChange = () => {},
+  notificationImages
 }) => {
   const now = new Date();
   const currentDate = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
   const currentDay = now.toLocaleDateString('en-US', { weekday: 'short' });
 
   return (
-    <div className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl mx-2 sm:mx-3 md:mx-4 lg:mx-6 p-3 sm:p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-      <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 md:mb-4 lg:mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>Order Analytics</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-2xl mx-2 sm:mx-4 md:mx-6 p-4 sm:p-6 shadow-sm overflow-hidden">
+      <h2 className="text-base font-semibold text-black dark:text-white mb-5 font-['Poppins']">Overview</h2>
       
-      {/* Row 1 - Responsive grid */}
-      <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4 xl:gap-5 mb-2 sm:mb-3 lg:mb-4">
-        <StatCard
-          title="Products on Hands"
-          value={stats.totalProducts || 45}
-          iconUrl={ICON_URLS.totalProduct}
-          iconBg="bg-white"
-        />
+      {/* Main grid - Cards + Notification */}
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch">
         
-        <StatCard
-          title="Total Orders"
-          value={(stats.totalOrders || 6550).toLocaleString()}
-          iconUrl={ICON_URLS.totalOrder}
-          iconBg="bg-white"
-        />
-        
-        <LanguageSelector currentLang={currentLang} onLangChange={onLangChange} />
-        
-        <DateDisplay date={currentDate} dayName={currentDay} />
-        
-        <div className="col-span-2 xs:col-span-1">
-          <NotificationCard title="Important Notification" />
+        {/* Left side - 2 rows of cards */}
+        <div className="flex-1 flex flex-col gap-4 min-w-0">
+          {/* Row 1 */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+            <StatCard
+              title="Total Products"
+              value={stats.totalProducts || 0}
+              iconUrl={ICON_URLS.totalProduct}
+            />
+            
+            <StatCard
+              title="Total Orders"
+              value={(stats.totalOrders || 0).toLocaleString()}
+              iconUrl={ICON_URLS.totalOrder}
+            />
+            
+            <LanguageDateCard 
+              currentLang={currentLang} 
+              onLangChange={onLangChange}
+              date={currentDate}
+              dayName={currentDay}
+            />
+          </div>
+          
+          {/* Row 2 */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+            <StatCard
+              title="Low Stock"
+              value={stats.lowStock || 0 }
+              iconUrl={ICON_URLS.lowStock}
+            />
+            
+            <StatCard
+              title="Total Amount"
+              value={stats.totalAmount || '৳0'}
+              iconUrl={ICON_URLS.totalAmount}
+            />
+            
+            {/* <StatCard
+              title="Total Stock"
+              value={(stats.totalStock ||  0).toLocaleString()}
+              iconUrl={ICON_URLS.totalStock}
+            /> */}
+            
+            <StatCard
+              title="To be Reviewed"
+              value={stats.toReview || 0}
+              iconUrl={ICON_URLS.toReview}
+            />
+          </div>
         </div>
-      </div>
-
-      {/* Row 2 - Responsive grid */}
-      <div className="grid grid-cols-2 xs:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 xl:gap-5">
-        <StatCard
-          title="Reserved Price"
-          value={stats.totalAmount || '৳8,35,500'}
-          iconUrl={ICON_URLS.totalAmount}
-          iconBg="bg-white"
-        />
         
-        <StatCard
-          title="Low Stock"
-          value={stats.lowStock || 5}
-          iconUrl={ICON_URLS.lowStock}
-          iconBg="bg-blue-500"
-        />
-        
-        <StatCard
-          title="To be Reviewed"
-          value={stats.toReview || 452}
-          iconUrl={ICON_URLS.toReview}
-          iconBg="bg-white"
-        />
+        {/* Right side - Notification card spans full height */}
+        <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 self-stretch">
+          <NotificationCard title="Important Notification" images={notificationImages} />
+        </div>
       </div>
     </div>
   );

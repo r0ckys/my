@@ -6,13 +6,46 @@ import { createRoot } from 'react-dom/client';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 // Get tenant scope from subdomain or cached value
+const KNOWN_BASE_DOMAINS = ['allinbangla.com', 'cartnget.shop', 'localhost'];
+
 const getTenantScope = (): string => {
   if (typeof window === 'undefined') return 'public';
   const hostname = window.location.hostname;
   // Skip for admin/superadmin subdomains
   if (hostname.startsWith('admin.') || hostname.startsWith('superadmin.')) return '';
+  
+  // Check if this is a custom domain (not a subdomain of known base domains)
+  const isKnownBaseDomain = KNOWN_BASE_DOMAINS.some(base => 
+    hostname === base || hostname.endsWith('.' + base) || hostname.endsWith('.' + base.split(':')[0])
+  );
+  
+  // If not a known base domain, check if we have cached custom domain resolution
+  if (!isKnownBaseDomain && !hostname.includes('localhost')) {
+    try {
+      const cachedCustomDomain = localStorage.getItem(`custom_domain_${hostname}`);
+      if (cachedCustomDomain) return cachedCustomDomain;
+      // Mark for async resolution - will be handled by App.tsx
+      (window as any).__CUSTOM_DOMAIN__ = hostname;
+      return ''; // Will be resolved by App.tsx via API
+    } catch {}
+  }
+  
   // Extract subdomain
   const parts = hostname.split('.');
+  
+  // Handle localhost development: tenant.localhost or tenant.localhost:port
+  // Also handle: tenant.local, tenant.test, tenant.dev
+  if (parts.length === 2 && ['localhost', 'local', 'test', 'dev'].includes(parts[1].split(':')[0])) {
+    const subdomain = parts[0].toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (subdomain && subdomain !== 'www') {
+      try {
+        const cached = localStorage.getItem(`tenant_id_${subdomain}`);
+        if (cached) return cached;
+      } catch {}
+      return subdomain; // Use subdomain directly for localhost
+    }
+  }
+  
   if (parts.length >= 3 && parts[0] !== 'www') {
     const subdomain = parts[0].toLowerCase().replace(/[^a-z0-9-]/g, '');
     // Check cached tenant ID for this subdomain

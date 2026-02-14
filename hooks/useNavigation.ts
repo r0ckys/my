@@ -15,15 +15,17 @@ export function getOrderIdFromUrl(): string | null {
   return params.get('orderId');
 }
 
-// Check if we're on the admin subdomain
+// Check if we're on the admin subdomain (including localhost)
 const isAdminSubdomain = typeof window !== 'undefined' && 
   (window.location.hostname === 'admin.allinbangla.com' || 
-   window.location.hostname.startsWith('admin.'));
+   window.location.hostname.startsWith('admin.') ||
+   window.location.hostname === 'admin.localhost');
 
-// Check if we're on the superadmin subdomain
+// Check if we're on the superadmin subdomain (including localhost)
 const isSuperAdminSubdomain = typeof window !== 'undefined' && 
   (window.location.hostname === 'superadmin.allinbangla.com' || 
-   window.location.hostname.startsWith('superadmin.'));
+   window.location.hostname.startsWith('superadmin.') ||
+   window.location.hostname === 'superadmin.localhost');
 
 // Check if URL path is /admin (for tenant subdomain admin access)
 const isAdminPath = typeof window !== 'undefined' && 
@@ -93,6 +95,17 @@ function getInitialView(): ViewState {
       // Ignore parse errors
     }
     return 'admin-login';
+  }
+  
+  // Check for /offer/ path - show offer page preview
+  const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  if (pathname.startsWith('offer/')) {
+    return 'offer_preview';
+  }
+  
+  // Check for /p/ path - show landing page preview
+  if (pathname.startsWith('p/')) {
+    return 'landing_preview';
   }
   
   return 'store';
@@ -274,9 +287,30 @@ export function useNavigation({ products, user, landingPages, setSelectedLanding
       return;
     }
     
+    // Known static routes that should NOT be treated as offer pages
+    const staticRoutes = [
+      'privacy', 'privacy-policy', 'about', 'about-us', 'terms', 'terms-and-conditions',
+      'contact', 'contact-us', 'profile', 'categories', 'track', 'track-order',
+      'faq', 'help', 'support', 'blog', 'cart', 'wishlist', 'orders', 'my-orders',
+      'account', 'login', 'signup', 'sign-up', 'signin', 'sign-in', 'forgot-password',
+      'reset-password', 'returns', 'return-policy', 'refund', 'refund-policy',
+      'shipping', 'shipping-policy', 'delivery', 'delivery-policy'
+    ];
+    
     // Handle root-level landing page slugs (new format: /slug-uniqueid)
     // This should be checked after all other routes
     if (trimmedPath && !trimmedPath.includes('/') && /^[a-z0-9-]+$/i.test(trimmedPath)) {
+      // Skip known static routes - these should go to store with the appropriate page
+      if (staticRoutes.includes(trimmedPath.toLowerCase())) {
+        console.log('[Navigation] Static route detected, not treating as offer:', trimmedPath);
+        // Let it fall through to the store/default handling
+        if (!activeView.startsWith('admin')) {
+          setSelectedProduct(null);
+          setCurrentView('store');
+        }
+        return;
+      }
+      
       console.log('[Navigation] Checking if path is a landing page slug:', trimmedPath);
       
       // First check if it's a landing page from the landing_pages collection
@@ -288,9 +322,14 @@ export function useNavigation({ products, user, landingPages, setSelectedLanding
         return;
       }
       
-      // Otherwise, treat it as an offer page slug
-      setSelectedOfferSlug(trimmedPath);
-      setCurrentView('offer_preview');
+      // Don't blindly treat as offer page - let it fall through to default store
+      // The PublicOfferPage component will fetch and display "not found" if needed
+      // Only route to offer_preview if we have explicit /offer/ prefix
+      console.log('[Navigation] Unknown path, routing to store:', trimmedPath);
+      if (!activeView.startsWith('admin')) {
+        setSelectedProduct(null);
+        setCurrentView('store');
+      }
       return;
     }
     if (trimmedPath === 'products') {
@@ -373,7 +412,7 @@ export function useNavigation({ products, user, landingPages, setSelectedLanding
         if (activeView !== 'super-admin') {
           setCurrentView('super-admin');
         }
-      } else if (activeView !== 'admin-login') {
+      } else {
         setCurrentView('admin-login');
       }
       return;

@@ -73,16 +73,17 @@ export const OfferPageBuilder: React.FC<OfferPageBuilderProps> = ({
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
+      formDataUpload.append('tenantId', tenantId || 'default');
       
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-      const response = await fetch(`${API_BASE_URL}/api/cloudflare/upload`, {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: 'POST',
         body: formDataUpload
       });
       
       if (response.ok) {
         const data = await response.json();
-        setFormData({ ...formData, imageUrl: data.url });
+        setFormData({ ...formData, imageUrl: data.imageUrl || data.url });
       } else {
         alert('Upload failed');
       }

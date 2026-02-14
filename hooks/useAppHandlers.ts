@@ -123,21 +123,93 @@ export function useAppHandlers(props: UseAppHandlersProps) {
   }, [activeTenantId, products, setProducts]);
 
   const handleDeleteProduct = useCallback((id: number) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-  }, [setProducts]);
+    setProducts(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      // Save to backend
+      DataService.save('products', updated, activeTenantId);
+      return updated;
+    });
+  }, [setProducts, activeTenantId]);
 
   const handleBulkDeleteProducts = useCallback((ids: number[]) => {
-    setProducts(prev => prev.filter(p => !ids.includes(p.id)));
-  }, [setProducts]);
+    setProducts(prev => {
+      const updated = prev.filter(p => !ids.includes(p.id));
+      // Save to backend
+      DataService.save('products', updated, activeTenantId);
+      toast.success(`Deleted ${ids.length} products`);
+      return updated;
+    });
+  }, [setProducts, activeTenantId]);
 
   const handleBulkUpdateProducts = useCallback((ids: number[], updates: Partial<Product>) => {
     const { slug, ...restUpdates } = updates;
-    setProducts(prev => prev.map(p => ids.includes(p.id) ? { ...p, ...restUpdates } : p));
-  }, [setProducts]);
+    setProducts(prev => {
+      const updated = prev.map(p => ids.includes(p.id) ? { ...p, ...restUpdates } : p);
+      // Save to backend
+      DataService.save('products', updated, activeTenantId);
+      return updated;
+    });
+  }, [setProducts, activeTenantId]);
+
+  const handleBulkFlashSale = useCallback((ids: number[], action: 'add' | 'remove') => {
+    setProducts(prev => {
+      const now = new Date();
+      const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+      const updated = prev.map(p => {
+        if (!ids.includes(p.id)) return p;
+        if (action === 'add') {
+          return {
+            ...p,
+            flashSale: true,
+            flashSaleStartDate: now.toISOString(),
+            flashSaleEndDate: endDate.toISOString()
+          };
+        } else {
+          return {
+            ...p,
+            flashSale: false,
+            flashSaleStartDate: undefined,
+            flashSaleEndDate: undefined
+          };
+        }
+      });
+      // Save to backend
+      DataService.save('products', updated, activeTenantId);
+      toast.success(action === 'add' 
+        ? `Added ${ids.length} products to Flash Sale` 
+        : `Removed ${ids.length} products from Flash Sale`);
+      return updated;
+    });
+  }, [setProducts, activeTenantId]);
+
+  const handleBulkDiscount = useCallback((ids: number[], discountPercent: number) => {
+    setProducts(prev => {
+      const updated = prev.map(p => {
+        if (!ids.includes(p.id)) return p;
+        const originalPrice = p.originalPrice || p.price;
+        const discountedPrice = Math.round(originalPrice * (1 - discountPercent / 100));
+        return {
+          ...p,
+          originalPrice: originalPrice,
+          price: discountedPrice,
+          discount: `${discountPercent}%`
+        };
+      });
+      // Save to backend
+      DataService.save('products', updated, activeTenantId);
+      toast.success(`Applied ${discountPercent}% discount to ${ids.length} products`);
+      return updated;
+    });
+  }, [setProducts, activeTenantId]);
 
   // === ORDER HANDLERS ===
   const handleUpdateOrder = useCallback((orderId: string, updates: Partial<Order>) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updates, tenantId: o.tenantId || activeTenantId } : o));
+  }, [activeTenantId, setOrders]);
+
+  const handleAddOrder = useCallback((newOrder: Order) => {
+    const scopedOrder = { ...newOrder, tenantId: newOrder.tenantId || activeTenantId };
+    setOrders(prev => [scopedOrder, ...prev]);
   }, [activeTenantId, setOrders]);
 
   // === WISHLIST HANDLERS ===
@@ -192,7 +264,12 @@ export function useAppHandlers(props: UseAppHandlersProps) {
       productName: selectedProduct?.name,
       quantity: formData.quantity || checkoutQuantity,
       deliveryType: formData.deliveryType,
-      deliveryCharge: formData.deliveryCharge
+      deliveryCharge: formData.deliveryCharge,
+      // Payment method info (for manual MFS payments)
+      paymentMethod: formData.paymentMethod,
+      paymentMethodId: formData.paymentMethodId,
+      transactionId: formData.transactionId,
+      customerPaymentPhone: formData.customerPaymentPhone
     };
 
     try {
@@ -311,15 +388,10 @@ export function useAppHandlers(props: UseAppHandlersProps) {
     }
   }, [activeTenantId, setDeliveryConfig]);
   const handleUpdatePaymentMethods = useCallback(async (methods: PaymentMethod[]) => {
+    console.log('[useAppHandlers] handleUpdatePaymentMethods called with', methods.length, 'methods');
     setPaymentMethods(methods);
-    if (activeTenantId) {
-      try {
-        await DataService.save('payment_methods', methods, activeTenantId);
-      } catch (error) {
-        console.error('Failed to save payment methods:', error);
-      }
-    }
-  }, [activeTenantId, setPaymentMethods]);
+    // Note: Data is already saved in AdminPaymentSettingsNew, no need to save again
+  }, [setPaymentMethods]);
 
   // === CATALOG CRUD HANDLERS ===
   // Memoize catalog handlers to prevent re-creation loops
@@ -455,9 +527,12 @@ export function useAppHandlers(props: UseAppHandlersProps) {
     handleDeleteProduct,
     handleBulkDeleteProducts,
     handleBulkUpdateProducts,
+    handleBulkFlashSale,
+    handleBulkDiscount,
     
     // Order handlers
     handleUpdateOrder,
+    handleAddOrder,
     
     // Wishlist handlers
     addToWishlist,

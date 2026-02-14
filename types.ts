@@ -46,6 +46,11 @@ export interface Tenant {
   createdAt: string;
   updatedAt: string;
   onboardingCompleted: boolean;
+  // Subscription fields
+  subscriptionStartedAt?: string;
+  subscriptionEndsAt?: string;
+  trialEndsAt?: string;
+  billingCycle?: 'monthly' | 'yearly';
   approvedAt?: string;
   approvedBy?: string;
   rejectedAt?: string;
@@ -58,6 +63,16 @@ export interface Tenant {
   currency?: string;
   branding?: TenantBranding;
   settings?: Record<string, any>;
+  // Package/Subscription Management
+  subscription?: {
+    packageStartDate: string;
+    packageDays: number;
+    gracePeriodDays: number;
+    isBlocked: boolean;
+    lastRenewalDate?: string;
+    lastNotificationShown?: string;
+    renewalDismissedAt?: string;
+  };
 }
 
 export interface CreateTenantPayload {
@@ -80,10 +95,26 @@ export interface ProductVariantStock extends ProductVariantSelection {
   sku?: string;
 }
 
+// Enhanced variant system with image support
+export interface ProductVariantOption {
+  attribute: string;
+  extraPrice: number;
+  image?: string;
+}
+
+export interface ProductVariantGroup {
+  title: string;
+  isMandatory?: boolean;
+  options: ProductVariantOption[];
+}
+
 export interface Product {
+  totalSold?: number;
+  sales?: number;
   id: number;
   name: string;
   tenantId?: string;
+  shopName?: string;
   price: number;
   originalPrice?: number;
   costPrice?: number; // Cost price for profit calculation
@@ -105,10 +136,14 @@ export interface Product {
   searchTags?: string[]; // Deep search tags for advanced product search
   colors?: string[]; // Added: Array of color codes or names
   sizes?: string[]; // Added: Array of size strings (S, M, L, XL etc)
+  variantGroups?: ProductVariantGroup[]; // Enhanced variants with images
   status?: 'Active' | 'Draft'; // Added for filtering
   stock?: number;
   variantDefaults?: Partial<ProductVariantSelection>;
   variantStock?: ProductVariantStock[];
+  flashSale?: boolean; // Flash sale flag
+  flashSaleStartDate?: string; // ISO date string
+  flashSaleEndDate?: string; // ISO date string
 }
 
 export interface Popup {
@@ -124,6 +159,11 @@ export interface Popup {
 }
 
 export interface Order {
+  customerPhone: string | undefined;
+  grandTotal: any;
+  total: any;
+  createdAt: string | number | Date;
+  items: any;
   weight: number;
   pathaoArea: number;
   pathaoZone: number;
@@ -151,6 +191,11 @@ export interface Order {
   courierMeta?: Record<string, any>;
   source?: 'store' | 'landing_page' | 'admin';
   landingPageId?: string;
+  // Payment method info (for manual MFS payments)
+  paymentMethod?: string; // e.g., 'bKash (Manual)', 'Nagad (Manual)', 'COD'
+  paymentMethodId?: string; // ID of the selected payment method
+  transactionId?: string; // Customer's transaction ID for manual payments
+  customerPaymentPhone?: string; // Customer's payment phone number
 }
 
 export interface User {
@@ -324,6 +369,10 @@ export interface WebsiteConfig {
   chatSurfaceColor?: string;
   chatBorderColor?: string;
   chatShadowColor?: string;
+  // Chat Support Credentials
+  chatSupportPhone?: string;
+  chatSupportWhatsapp?: string;
+  chatSupportMessenger?: string;
   // App Download Links
   androidAppUrl?: string;
   iosAppUrl?: string;
@@ -335,6 +384,23 @@ export interface WebsiteConfig {
   popups?: Popup[];
   // Custom Domain for storefront
   customDomain?: string | null;
+  // Country & Currency Settings
+  shopCountry?: string;
+  shopCurrency?: string;
+  // Social Login Settings
+  socialLogins?: { type: string; clientId: string }[];
+  // Offer Settings
+  offers?: { type: string; discount: string }[];
+  // About/Policy text
+  aboutUs?: string;
+  privacyPolicy?: string;
+  termsAndConditions?: string;
+  returnPolicy?: string;
+  // Product Settings
+  showProductSoldCount?: boolean;
+  allowProductImageDownloads?: boolean;
+  showEmailFieldForOrder?: boolean;
+  enablePromoCode?: boolean;
 }
 
 export interface DeliveryConfig {
@@ -350,10 +416,10 @@ export interface DeliveryConfig {
 
 export interface PaymentMethod {
   id: string;
-  provider: 'cod' | 'bkash' | 'nagad' | 'rocket' | 'sslcommerz' | 'custom';
+  provider: 'cod' | 'bkash' | 'nagad' | 'rocket' | 'upay' | 'tap' | 'sslcommerz' | 'custom';
   name: string;
   isEnabled: boolean;
-  paymentType?: 'send_money' | 'payment' | 'merchant' | 'agent';
+  paymentType?: 'send_money' | 'payment' | 'merchant' | 'agent' | 'personal';
   accountNumber?: string;
   accountName?: string;
   paymentInstruction?: string;

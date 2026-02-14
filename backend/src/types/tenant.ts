@@ -32,6 +32,16 @@ export interface Tenant extends BaseModel {
     language?: string;
     [key: string]: unknown;
   };
+  // Subscription/Package Management
+  subscription?: {
+    packageStartDate: string; // ISO date string when package started
+    packageDays: number; // Number of days in package (default 30)
+    lastRenewalDate?: string; // ISO date of last renewal
+    gracePeriodDays: number; // Days after expiry before hard block (default 7)
+    isBlocked: boolean; // If true, block all API calls
+    lastNotificationShown?: string; // Date when last daily notification was shown
+    renewalDismissedAt?: string; // When user dismissed the renewal popup
+  };
 }
 
 export interface CreateTenantPayload {

@@ -29,7 +29,7 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ data = [] }) => {
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-gray-900 text-sm sm:text-base font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h3 className="text-gray-900 text-sm sm:text-base font-semibold font-['Poppins']">
             Sale by Category
           </h3>
           <p className="text-gray-500 text-xs mt-0.5">Product category distribution</p>

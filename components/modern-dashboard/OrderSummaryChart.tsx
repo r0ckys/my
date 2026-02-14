@@ -1,57 +1,159 @@
-import React from 'react';
 
-interface OrderSummaryChartProps {
-  data: { name: string; value: number; color: string }[];
+interface OrderStatus {
+  label: string;
+  percentage: number;
+  color: string;
+  bgColor: string;
 }
 
-const icons: Record<string, React.ReactNode> = {
-  Dashboard: (
-    <div className="w-6 h-6 relative">
-      <div className="w-2 h-2 left-0.5 top-3.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-sky-400" />
-      <div className="w-2 h-2 left-3.5 top-3.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-sky-400" />
-      <div className="w-2 h-2 left-0.5 top-0.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-sky-400" />
-      <div className="w-2 h-2 left-3.5 top-0.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-sky-400" />
-    </div>
-  ),
-  Orders: (
-    <div className="w-6 h-6 relative">
-      <div className="w-1 h-1.5 left-4.5 top-0.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-black" />
-      <div className="w-4.5 h-5 left-0.5 top-0.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-black" />
-      <div className="w-1 h-2 left-2 h-2.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-black" />
-    </div>
-  ),
-  Products: (
-    <div className="w-6 h-6 relative">
-      <div className="w-5 h-5 left-0.5 top-0.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-black" />
-      <div className="w-2.5 h-1.5 left-0.5 top-2.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-black" />
-      <div className="w-2.5 h-1.5 left-2.5 top-2.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-black" />
-      <div className="w-2.5 h-1.5 left-1.5 top-1.5 absolute rounded bg-gradient-to-r from-sky-400 to-blue-500 border border-black" />
-    </div>
-  ),
-};
+interface DonutChartProps {
+  data: OrderStatus[];
+  total: number;
+}
 
-const OrderSummaryChart: React.FC<OrderSummaryChartProps> = ({ data }) => {
+/**
+ * A dynamic Donut Chart component that renders based on percentage values.
+ */
+export const DonutChart = ({ data }: DonutChartProps) => {
+  let cumulativePercentage = 0;
+  const radius = 40;
+  const strokeWidth = 12;
+  const center = 50;
+  const circumference = 2 * Math.PI * radius;
+
   return (
-    <div className="relative w-full h-[240px] bg-[#F9F9F9] rounded-lg overflow-hidden flex flex-col justify-center">
-      {/* Decorative gradient bar */}
-      <div className="absolute left-8 top-[125px] w-[204px] h-[34px] opacity-20 rounded bg-gradient-to-r from-sky-400 to-blue-500" />
-      {/* List */}
-      <div className="absolute left-10 top-[130px] flex flex-col gap-5">
-        {data.map((item, idx) => (
-          <div key={item.name} className="flex items-center gap-4">
-            {/* Custom icon or colored dot */}
-            <div className="w-6 h-6 flex items-center justify-center">
-              <span className="w-3 h-3 rounded-full" style={{ background: item.color }} />
-            </div>
-            <span className="text-base font-poppins font-medium" style={{ color: item.color }}>{item.name}</span>
-            <span className="ml-auto text-base font-poppins font-semibold text-black">{item.value}</span>
-          </div>
-        ))}
-      </div>
-      {/* Title */}
-      <div className="absolute left-8 top-8 text-black text-lg font-poppins font-semibold">Order Summary</div>
-    </div>
+    <svg 
+      viewBox="0 0 100 100" 
+      className="w-full h-full transform -rotate-90"
+    >
+      {data.map((item, index) => {
+        const strokeDasharray = `${(item.percentage * circumference) / 100} ${circumference}`;
+        const strokeDashoffset = -(cumulativePercentage * circumference) / 100;
+        cumulativePercentage += item.percentage;
+
+        return (
+          <circle
+            key={index}
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="transparent"
+            stroke={item.color}
+            strokeWidth={strokeWidth}
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className="transition-all duration-500 ease-in-out"
+          />
+        );
+      })}
+    </svg>
   );
 };
+
+/**
+ * OrderSummaryChart Component
+ */
+function OrderSummaryChart() {
+  const orderStatuses = [
+    {
+      label: "Pending",
+      percentage: 31,
+      color: "#26007e",
+      bgColor: "bg-[#26007e]",
+    },
+    {
+      label: "Confirmed",
+      percentage: 20,
+      color: "#7ad100",
+      bgColor: "bg-[#7ad100]",
+    },
+    {
+      label: "Delivered",
+      percentage: 14,
+      color: "#1883ff",
+      bgColor: "bg-[#1883ff]",
+    },
+    {
+      label: "Canceled",
+      percentage: 11,
+      color: "#fab300",
+      bgColor: "bg-[#fab300]",
+    },
+    {
+      label: "Paid Returned",
+      percentage: 15,
+      color: "#c71cb6",
+      bgColor: "bg-[#c71cb6]",
+    },
+    {
+      label: "Returned",
+      percentage: 9,
+      color: "#da0000",
+      bgColor: "bg-[#da0000]",
+    },
+  ];
+
+  const totalOrders = 1250;
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
+      <section
+        className="flex flex-col w-full max-w-[408px] h-auto min-h-[310px] items-start gap-5 px-6 py-6 bg-white rounded-xl shadow-sm overflow-hidden"
+        aria-labelledby="order-summary-title"
+      >
+        <header className="w-full border-b border-gray-50 pb-2">
+          <h2
+            id="order-summary-title"
+            className="text-[#23272e] font-bold text-lg tracking-tight"
+          >
+            Order Summary
+          </h2>
+        </header>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-8 w-full">
+          {/* Chart Container */}
+          <div className="relative w-[180px] h-[180px] flex-shrink-0">
+            <DonutChart data={orderStatuses} total={totalOrders} />
+            
+            {/* Center Text Overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Total</span>
+              <span className="text-black font-extrabold text-3xl leading-none my-0.5">
+                {totalOrders}
+              </span>
+              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Orders</span>
+            </div>
+          </div>
+
+          {/* Legend Section */}
+          <div className="flex flex-col gap-3 w-full sm:w-auto">
+            <ul className="grid grid-cols-1 gap-2.5" role="list">
+              {orderStatuses.map((status, index) => (
+                <li
+                  key={index}
+                  className="flex items-center gap-3"
+                >
+                  <span
+                    className={`flex-shrink-0 w-2.5 h-2.5 ${status.bgColor} rounded-full`}
+                    aria-hidden="true"
+                  />
+                  <p className="text-sm font-semibold whitespace-nowrap">
+                    <span className="text-slate-700">{status.label} </span>
+                    <span className="text-gray-400 font-normal ml-0.5">(</span>
+                    <span style={{ color: status.color }}>
+                      {status.percentage}%
+                    </span>
+                    <span className="text-gray-400 font-normal">)</span>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
 
 export default OrderSummaryChart;

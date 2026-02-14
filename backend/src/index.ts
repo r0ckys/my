@@ -39,6 +39,9 @@ import faviconRouter from './routes/favicon';
 
 import aiAssistantRouter from './routes/aiAssistant';
 import smsRouter from './routes/sms';
+import imageSearchRouter from './routes/imageSearch';
+import { checkTenantSubscription, addSubscriptionHeaders } from './middleware/subscriptionCheck';
+import { subscriptionRouter } from './routes/subscription';
 
 const app = express();
 const httpServer = createServer(app);
@@ -68,6 +71,7 @@ const io = new SocketIOServer(httpServer, {
       const systemnextPattern = /^https?:\/\/([a-z0-9-]+\.)?systemnextit\.com$/i;
       const cartngetPattern = /^https?:\/\/([a-z0-9-]+\.)?cartnget\.shop$/i;
       const shopbdPattern = /^https?:\/\/([a-z0-9-]+\.)?shopbdit\.com$/i;
+      // Support localhost with subdomains: store.localhost:3000, admin.localhost:5173, etc.
       const localhostPattern = /^https?:\/\/([a-z0-9-]+\.)?localhost(:\d+)?$/i;
       const origins = Array.isArray(origin) ? origin : [origin];
       const isAllowed = origins.some(o => 
@@ -125,7 +129,8 @@ const corsOptions: cors.CorsOptions = {
     const systemnextPattern = /^https?:\/\/([a-z0-9-]+\.)?systemnextit\.com$/i;
     const cartngetPattern = /^https?:\/\/([a-z0-9-]+\.)?cartnget\.shop$/i;
     const shopbdPattern = /^https?:\/\/([a-z0-9-]+\.)?shopbdit\.com$/i;
-    const localhostPattern = /^https?:\/\/localhost(:\d+)?$/i;
+    // Support localhost with subdomains: store.localhost:3000, admin.localhost:5173, etc.
+    const localhostPattern = /^https?:\/\/([a-z0-9-]+\.)?localhost(:\d+)?$/i;
     
     if (systemnextPattern.test(origin) || cartngetPattern.test(origin) || shopbdPattern.test(origin) || localhostPattern.test(origin)) {
       return callback(null, true);
@@ -176,6 +181,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// Subscription check middleware - blocks API calls for expired tenants
+app.use(checkTenantSubscription);
+
+// Add subscription status headers to responses
+app.use(addSubscriptionHeaders);
+
 // Serve static files for uploaded images
 // Use image optimization route first (handles ?w=&q= params)
 // Apply cache headers to uploads
@@ -209,6 +220,8 @@ app.use('/api/apk-builder', apkBuilderRouter);
 app.use('/api/favicon', faviconRouter);
 app.use('/api/ai-assistant', aiAssistantRouter);
 app.use('/api/sms', smsRouter);
+app.use('/api/image-search', imageSearchRouter);
+app.use('/api/subscription', subscriptionRouter);
 app.use('/api', dueListRoutes);
 
 // Visitors tracking (import at top of file)

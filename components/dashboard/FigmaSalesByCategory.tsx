@@ -1,30 +1,87 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { Order } from '../../types';
 
 interface CategoryData {
   name: string;
   percentage: number;
   color: string;
   bgColor: string;
+  textColor: string;
 }
 
 interface FigmaSalesByCategoryProps {
   categories?: CategoryData[];
+  orders?: Order[];
 }
 
+// Predefined colors for categories
+const categoryColors = [
+  { color: '#4F46E5', bgColor: 'bg-indigo-600', textColor: 'text-indigo-600' },
+  { color: '#FB923C', bgColor: 'bg-orange-400', textColor: 'text-orange-400' },
+  { color: '#FCA5A5', bgColor: 'bg-red-300', textColor: 'text-red-300' },
+  { color: '#EF4444', bgColor: 'bg-red-500', textColor: 'text-red-500' },
+  { color: '#A3E635', bgColor: 'bg-lime-400', textColor: 'text-lime-400' },
+  { color: '#38BDF8', bgColor: 'bg-sky-400', textColor: 'text-slate-600' },
+  { color: '#A21CAF', bgColor: 'bg-fuchsia-700', textColor: 'text-fuchsia-700' },
+  { color: '#059669', bgColor: 'bg-emerald-600', textColor: 'text-emerald-600' },
+  { color: '#7C3AED', bgColor: 'bg-violet-600', textColor: 'text-violet-600' },
+  { color: '#DB2777', bgColor: 'bg-pink-600', textColor: 'text-pink-600' }
+];
+
+const defaultCategories: CategoryData[] = [
+  { name: 'Hair care', percentage: 15, color: '#4F46E5', bgColor: 'bg-indigo-600', textColor: 'text-indigo-600' },
+  { name: 'Serum', percentage: 15, color: '#FB923C', bgColor: 'bg-orange-400', textColor: 'text-orange-400' },
+  { name: 'Cream', percentage: 15, color: '#FCA5A5', bgColor: 'bg-red-300', textColor: 'text-red-300' },
+  { name: 'Home & kitchen', percentage: 15, color: '#EF4444', bgColor: 'bg-red-500', textColor: 'text-red-500' },
+  { name: 'Lip care', percentage: 15, color: '#A3E635', bgColor: 'bg-lime-400', textColor: 'text-lime-400' },
+  { name: 'Air Conditioner', percentage: 15, color: '#38BDF8', bgColor: 'bg-sky-400', textColor: 'text-slate-600' },
+  { name: 'Skin care', percentage: 10, color: '#A21CAF', bgColor: 'bg-fuchsia-700', textColor: 'text-fuchsia-700' }
+];
+
 const FigmaSalesByCategory: React.FC<FigmaSalesByCategoryProps> = ({
-  categories = [
-    { name: 'Hair care', percentage: 15, color: '#4F46E5', bgColor: 'bg-indigo-600' },
-    { name: 'Serum', percentage: 15, color: '#FB923C', bgColor: 'bg-orange-400' },
-    { name: 'Cream', percentage: 15, color: '#FCA5A5', bgColor: 'bg-red-300' },
-    { name: 'Home & kitchen', percentage: 15, color: '#EF4444', bgColor: 'bg-red-500' },
-    { name: 'Lip care', percentage: 15, color: '#A3E635', bgColor: 'bg-lime-400' },
-    { name: 'Air Conditioner', percentage: 15, color: '#38BDF8', bgColor: 'bg-sky-400' },
-    { name: 'Skin care', percentage: 10, color: '#A21CAF', bgColor: 'bg-fuchsia-700' }
-  ]
+  categories,
+  orders = []
 }) => {
+  // Compute categories from orders if no categories prop provided
+  const computedCategories = useMemo(() => {
+    if (categories) return categories;
+    if (orders.length === 0) return defaultCategories;
+
+    // Count orders by product category (using productName as fallback category)
+    const categoryCount: Record<string, number> = {};
+    
+    orders.forEach(order => {
+      // Try to get category from order items
+      const items = Array.isArray(order.items) ? order.items : [];
+      if (items.length > 0) {
+        items.forEach((item: any) => {
+          const category = item.category || item.productName || 'Other';
+          categoryCount[category] = (categoryCount[category] || 0) + (item.quantity || 1);
+        });
+      } else {
+        // Use productName as category fallback
+        const category = order.productName || 'Uncategorized';
+        categoryCount[category] = (categoryCount[category] || 0) + (order.quantity || 1);
+      }
+    });
+
+    const total = Object.values(categoryCount).reduce((sum, count) => sum + count, 0);
+    
+    // Sort by count and take top categories
+    const sorted = Object.entries(categoryCount)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 7);
+
+    return sorted.map(([name, count], index) => ({
+      name,
+      percentage: Math.round((count / total) * 100),
+      ...categoryColors[index % categoryColors.length]
+    }));
+  }, [categories, orders]);
+  
   // Calculate angles for pie chart
   let currentAngle = 0;
-  const segments = categories.map((category) => {
+  const segments = computedCategories.map((category) => {
     const angle = (category.percentage / 100) * 360;
     const segment = {
       ...category,
@@ -71,52 +128,37 @@ const FigmaSalesByCategory: React.FC<FigmaSalesByCategoryProps> = ({
   };
 
   return (
-    <div 
-      className="bg-white rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 h-full flex flex-col hover:shadow-lg transition-shadow duration-300"
-      style={{ 
-        boxShadow: '0px 2px 9.6px rgba(0, 0, 0, 0.08)',
-        fontFamily: 'Poppins, sans-serif'
-      }}
-    >
-      <h3 className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold text-zinc-800 mb-2 sm:mb-3 md:mb-4 lg:mb-6">Sale By Category</h3>
-      
-      <div className="flex flex-col items-center flex-1">
-        {/* Pie Chart - Donut style */}
-        <div className="w-28 sm:w-36 md:w-40 lg:w-48 xl:w-56 h-28 sm:h-36 md:h-40 lg:h-48 xl:h-56 relative mb-3 sm:mb-4 md:mb-6 lg:mb-8 group">
-          <svg width="100%" height="100%" viewBox="0 0 200 200" className="transform -rotate-90">
-            {segments.map((segment, index) => (
-              <path
-                key={index}
-                d={createPath(segment.startAngle, segment.endAngle, 90, 50)}
-                fill={segment.color}
-                className="hover:opacity-80 hover:scale-105 origin-center transition-all duration-300 cursor-pointer"
-              />
-            ))}
-          </svg>
-          {/* Center circle for donut effect */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28 h-12 sm:h-16 md:h-20 lg:h-24 xl:h-28 rounded-full bg-white shadow-inner flex items-center justify-center">
-              <span className="text-xs sm:text-sm lg:text-base xl:text-lg font-bold text-zinc-600 hidden lg:block">100%</span>
+    <div className="w-full h-auto min-h-[380px] sm:h-[402px] p-4 sm:p-5 bg-white dark:bg-gray-800 rounded-xl border border-zinc-200 dark:border-gray-700 overflow-hidden flex flex-col">
+      {/* Title */}
+      <div className="mb-4">
+        <div className="text-zinc-800 dark:text-white text-lg font-bold font-['Lato']">Sale By Category</div>
+      </div>
+
+      {/* Pie Chart - Donut style */}
+      <div className="flex-shrink-0 w-36 h-36 sm:w-48 sm:h-48 mx-auto overflow-hidden">
+        <svg width="100%" height="100%" viewBox="0 0 200 200" className="transform -rotate-90">
+          {segments.map((segment, index) => (
+            <path
+              key={index}
+              d={createPath(segment.startAngle, segment.endAngle, 90, 50)}
+              fill={segment.color}
+            />
+          ))}
+        </svg>
+      </div>
+
+      {/* Legend - Responsive grid */}
+      <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-x-2 gap-y-1 sm:gap-x-4 sm:gap-y-1.5">
+        {computedCategories.map((category, index) => (
+          <div key={index} className="flex justify-start items-center gap-1.5 sm:gap-2.5">
+            <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${category.bgColor} rounded-full flex-shrink-0`} />
+            <div className="justify-start truncate">
+              <span className="text-black dark:text-gray-300 text-xs sm:text-sm font-medium font-['Satoshi']">{category.name}(</span>
+              <span className={`${category.textColor} text-xs sm:text-sm font-medium font-['Satoshi']`}>{category.percentage}%</span>
+              <span className="text-black dark:text-gray-300 text-xs sm:text-sm font-medium font-['Satoshi']">)</span>
             </div>
           </div>
-        </div>
-        
-        {/* Legend - Two columns */}
-        <div className="grid grid-cols-2 gap-x-3 sm:gap-x-4 md:gap-x-6 lg:gap-x-8 gap-y-1 sm:gap-y-1.5 md:gap-y-2 lg:gap-y-3 w-full">
-          {categories.map((category, index) => (
-            <div key={index} className="flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 cursor-pointer hover:opacity-70 transition-opacity group">
-              <div 
-                className={`w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 rounded-full flex-shrink-0 ${category.bgColor} group-hover:scale-125 transition-transform`}
-              ></div>
-              <span 
-                className="text-[10px] sm:text-xs lg:text-sm text-zinc-500 truncate"
-                style={{ fontFamily: 'Lato, sans-serif' }}
-              >
-                {category.name}({category.percentage}%)
-              </span>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
     </div>
   );

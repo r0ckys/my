@@ -84,6 +84,8 @@ const AdminGallery: React.FC = () => {
 
   // Load folders
   const loadFolders = useCallback(async () => {
+    // Skip if tenantId not yet loaded
+    if (!tenantId) return;
     try {
       const res = await fetch(`${apiBase}/api/upload/folders?tenantId=${tenantId}`, {
         credentials: 'include',
@@ -100,6 +102,8 @@ const AdminGallery: React.FC = () => {
 
   // Load trash
   const loadTrash = useCallback(async () => {
+    // Skip if tenantId not yet loaded
+    if (!tenantId) return;
     setIsLoadingTrash(true);
     try {
       const res = await fetch(`${apiBase}/api/upload/trash?tenantId=${tenantId}`, {
@@ -444,6 +448,13 @@ const AdminGallery: React.FC = () => {
     const files = input.files;
     if (!files || files.length === 0) return;
 
+    // Ensure tenantId is valid before uploading
+    if (!tenantId) {
+      toast.error('Tenant not loaded yet. Please try again in a moment.');
+      if (input) input.value = '';
+      return;
+    }
+
     const uploadPromises = Array.from(files).map(async (file) => {
       try {
         const imageUrl = await uploadImageToServer(file, tenantId);
@@ -501,6 +512,12 @@ const AdminGallery: React.FC = () => {
     const files = e.dataTransfer.files;
     if (!files || files.length === 0) return;
 
+    // Ensure tenantId is valid before uploading
+    if (!tenantId) {
+      toast.error('Tenant not loaded yet. Please try again in a moment.');
+      return;
+    }
+
     // Filter only image files
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
     if (imageFiles.length === 0) {
@@ -546,11 +563,20 @@ const AdminGallery: React.FC = () => {
       {/* Drag and Drop Overlay */}
       {isDragging && (
         <div className="absolute inset-0 bg-purple-500/10 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-none">
-          <div className="bg-white rounded-xl p-8 shadow-2xl border-2 border-dashed border-purple-500">
+          <div className={`bg-white rounded-xl p-8 shadow-2xl border-2 border-dashed ${tenantId ? 'border-purple-500' : 'border-gray-400'}`}>
             <div className="text-center">
-              <Upload size={48} className="mx-auto mb-4 text-purple-500" />
-              <p className="text-lg font-bold text-purple-700">Drop images here to upload</p>
-              <p className="text-sm text-gray-500 mt-1">Images will be uploaded to {currentFolder || 'Gallery Root'}</p>
+              <Upload size={48} className={`mx-auto mb-4 ${tenantId ? 'text-purple-500' : 'text-gray-400'}`} />
+              {tenantId ? (
+                <>
+                  <p className="text-lg font-bold text-purple-700">Drop images here to upload</p>
+                  <p className="text-sm text-gray-500 mt-1">Images will be uploaded to {currentFolder || 'Gallery Root'}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-bold text-gray-600">Please wait...</p>
+                  <p className="text-sm text-gray-500 mt-1">Store is still loading</p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -896,11 +922,39 @@ const AdminGallery: React.FC = () => {
               />
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg font-bold transition uppercase tracking-wide text-xs sm:text-sm border border-purple-200"
+                disabled={!tenantId}
+                className={`group relative px-6 sm:px-10 py-2 sm:py-4 rounded-xl font-bold transition-all duration-500 active:scale-95 overflow-hidden ${
+                  tenantId 
+                    ? 'bg-slate-950' 
+                    : 'bg-gray-300 cursor-not-allowed'
+                }`}
+                title={!tenantId ? 'Waiting for store to load...' : 'Upload images'}
               >
-                <Upload size={16} className="sm:hidden" />
-                <Upload size={18} className="hidden sm:block" />
-                Upload
+                {tenantId && (
+                  <>
+                    {/* Crystal Gradient Border */}
+                    <span className="absolute inset-0 rounded-xl border-2 border-transparent bg-gradient-to-r from-orange-500 to-blue-500 [mask-image:linear-gradient(white,white)_padding-box,linear-gradient(white,white)] [mask-composite:exclude] opacity-70 animate-pulse"></span>
+                    
+                    {/* Dual-Tone Glow */}
+                    <span className="absolute inset-0 rounded-xl bg-orange-500/20 blur-xl animate-pulse"></span>
+                    <span className="absolute -inset-1 rounded-xl bg-blue-500/20 blur-2xl animate-pulse [animation-delay:1.5s]"></span>
+                    
+                    {/* Prismatic Reflection */}
+                    <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full"></span>
+
+                    {/* Edge Highlights */}
+                    <span className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-orange-300/30 to-transparent"></span>
+                    <span className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-300/30 to-transparent"></span>
+                  </>
+                )}
+                
+                {/* Content */}
+                <span className="relative z-10 flex items-center justify-center gap-2 sm:gap-3">
+                  <Upload className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-500 ${tenantId ? 'text-orange-400 group-hover:text-blue-300 group-hover:-translate-y-1 drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]' : 'text-gray-500'}`} />
+                  <span className={`tracking-[0.1em] uppercase text-xs sm:text-sm font-bold transition-all duration-500 ${tenantId ? 'text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-blue-400 group-hover:from-white group-hover:to-white' : 'text-gray-500'}`}>
+                    {tenantId ? 'Upload' : 'Loading...'}
+                  </span>
+                </span>
               </button>
               
               <div className="px-3 sm:px-6 py-2 sm:py-3 border border-purple-600 text-purple-600 rounded-lg font-medium text-xs sm:text-sm min-w-[80px] sm:min-w-[120px] text-center">

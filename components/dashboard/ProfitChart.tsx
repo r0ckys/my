@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { ProfitChartProps } from './types';
 
 const ProfitChart: React.FC<ProfitChartProps> = ({ data }) => {
+  const [isAnimated, setIsAnimated] = useState(false);
+
+  // Check if there's actual data with values
+  const hasData = useMemo(() => {
+    return data && data.length > 0 && data.some(d => (d.profit || 0) > 0);
+  }, [data]);
+
+  useEffect(() => {
+    // Only animate if there's data
+    if (hasData) {
+      const timer = setTimeout(() => setIsAnimated(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [hasData]);
+
+  // Should show curved chart only when animated AND has data
+  const showCurved = isAnimated && hasData;
+
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm">
-      <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3 font-['Poppins']">
         Total Profit
       </h3>
 
@@ -35,17 +53,25 @@ const ProfitChart: React.FC<ProfitChartProps> = ({ data }) => {
             <line key={i} x1="28" y1={12 + i * 27} x2="295" y2={12 + i * 27} stroke="#E5E7EB" strokeWidth="0.5" />
           ))}
 
-          {/* Profit Area */}
+          {/* Profit Area - Animated from flat to curved when data exists */}
           <path
-            d="M28,100 Q80,70 150,50 T270,30 L270,120 L28,120 Z"
+            d={showCurved 
+              ? "M28,100 Q80,70 150,50 T270,30 L270,120 L28,120 Z" 
+              : "M28,110 Q80,110 150,110 T270,110 L270,120 L28,120 Z"
+            }
             fill="url(#profitGradient)"
+            style={{ transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
           <path
-            d="M28,100 Q80,70 150,50 T270,30"
+            d={showCurved 
+              ? "M28,100 Q80,70 150,50 T270,30" 
+              : "M28,110 Q80,110 150,110 T270,110"
+            }
             fill="none"
             stroke="#3B82F6"
             strokeWidth="2"
             strokeLinecap="round"
+            style={{ transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
         </svg>
 

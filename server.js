@@ -82,39 +82,103 @@ async function createServer() {
   // Use compression middleware
   app.use(compressionMiddleware);
 
-  // Parse JSON bodies for API proxy
-  app.use(express.json({ limit: '10mb' }));
-
   // Security headers middleware
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Allow iframe embedding from same origin and subdomains (for preview feature)
+    const host = req.headers.host || '';
+    if (host.includes('localhost')) {
+      // For localhost development: allow any localhost subdomain
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'self' http://*.localhost:3000 http://localhost:3000");
+    } else {
+      // For production: allow same origin and subdomains
+      const baseDomain = host.split('.').slice(-2).join('.');
+      res.setHeader('Content-Security-Policy', `frame-ancestors 'self' https://*.${baseDomain} https://${baseDomain}`);
+    }
+    // Remove X-Frame-Options as we're using CSP frame-ancestors instead
+    next();
+  });
+
+  // CORS middleware for API requests (handles subdomains like admin.localhost)
+  app.use('/api', (req, res, next) => {
+    const origin = req.headers.origin || '';
+    // Allow localhost and any subdomain of localhost
+    const localhostPattern = /^https?:\/\/([a-z0-9-]+\.)?localhost(:\d+)?$/i;
+    
+    if (localhostPattern.test(origin) || !origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin || '*');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Tenant-ID, X-Tenant-Subdomain, X-Requested-With, Accept, Origin');
+      res.setHeader('Access-Control-Max-Age', '86400');
+    }
+
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
+    }
+
     next();
   });
 
   // Proxy API requests to backend server
+  // Uses raw streaming to properly handle multipart/form-data file uploads
   app.use('/api', async (req, res) => {
     const backendUrl = `http://localhost:5001/api${req.url}`;
+    const contentType = req.get('Content-Type') || '';
+    const isMultipart = contentType.includes('multipart/form-data');
+    
     try {
+      // For multipart/form-data, stream the raw request body to preserve file data
+      // For JSON, we can use express.json() parser upstream if needed
+      let bodyBuffer;
+      let forwardHeaders = {
+        'Authorization': req.get('Authorization') || '',
+        'X-Tenant-ID': req.get('X-Tenant-ID') || '',
+        'X-Tenant-Subdomain': req.get('X-Tenant-Subdomain') || '',
+        'X-Forwarded-For': req.ip || req.get('X-Forwarded-For') || '',
+        'X-Real-IP': req.get('X-Real-IP') || req.ip || '',
+      };
+
+      if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+        if (isMultipart) {
+          // Stream raw body for multipart/form-data (file uploads)
+          bodyBuffer = await new Promise((resolve, reject) => {
+            const chunks = [];
+            req.on('data', chunk => chunks.push(chunk));
+            req.on('end', () => resolve(Buffer.concat(chunks)));
+            req.on('error', reject);
+          });
+          // Preserve the exact Content-Type with boundary
+          forwardHeaders['Content-Type'] = contentType;
+          forwardHeaders['Content-Length'] = bodyBuffer.length.toString();
+        } else {
+          // For JSON, collect body and forward as JSON string
+          bodyBuffer = await new Promise((resolve, reject) => {
+            const chunks = [];
+            req.on('data', chunk => chunks.push(chunk));
+            req.on('end', () => resolve(Buffer.concat(chunks)));
+            req.on('error', reject);
+          });
+          forwardHeaders['Content-Type'] = contentType || 'application/json';
+          forwardHeaders['Content-Length'] = bodyBuffer.length.toString();
+        }
+      }
+
       const response = await fetch(backendUrl, {
         method: req.method,
-        headers: {
-          'Content-Type': req.get('Content-Type') || 'application/json',
-          'Authorization': req.get('Authorization') || '',
-          'X-Tenant-ID': req.get('X-Tenant-ID') || '',
-          'X-Forwarded-For': req.ip || req.get('X-Forwarded-For') || '',
-          'X-Real-IP': req.get('X-Real-IP') || req.ip || '',
-        },
-        body: ['POST', 'PUT', 'PATCH'].includes(req.method) 
-          ? JSON.stringify(req.body) 
-          : undefined
+        headers: forwardHeaders,
+        body: bodyBuffer || undefined,
+        // Ensure we don't modify the body
+        duplex: 'half'
       });
       
       // Copy response headers
-      const contentType = response.headers.get('Content-Type');
-      if (contentType) res.setHeader('Content-Type', contentType);
+      const responseContentType = response.headers.get('Content-Type');
+      if (responseContentType) res.setHeader('Content-Type', responseContentType);
       
       const data = await response.text();
       res.status(response.status).send(data);
@@ -158,8 +222,13 @@ async function createServer() {
   });
 
   // Block access to sensitive files and directories
+  // Note: node_modules is only blocked in production - Vite needs it in development
   app.use((req, res, next) => {
-    const blocked = ['.git', '.env', '.htaccess', '.svn', 'wp-admin', 'wp-login', 'phpinfo', '.DS_Store', 'node_modules'];
+    const blocked = ['.git', '.env', '.htaccess', '.svn', 'wp-admin', 'wp-login', 'phpinfo', '.DS_Store'];
+    // Only block node_modules in production - Vite serves from node_modules in dev
+    if (isProduction) {
+      blocked.push('node_modules');
+    }
     const url = req.url.toLowerCase();
     if (blocked.some(b => url.includes(b))) {
       return res.status(404).end();

@@ -601,10 +601,11 @@ const AdminPurchase: React.FC<AdminPurchaseProps> = ({ products = [], tenantId, 
     }
     try {
       const formData = new FormData();
-      formData.append('image', file);
-      const response = await fetch('/api/upload', {
+      formData.append('file', file);
+      formData.append('tenantId', tenantId || 'default');
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: 'POST',
-        headers: { 'X-Tenant-Id': tenantId || '', ...getAuthHeader() },
         body: formData
       });
       if (response.ok) {

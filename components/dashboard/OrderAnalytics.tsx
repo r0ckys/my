@@ -1,6 +1,6 @@
-import React from 'react';
-import { Package, ShoppingCart, DollarSign, AlertTriangle, FileCheck } from 'lucide-react';
-import { useLanguage, formatNumber, formatCurrency } from '../../context/LanguageContext';
+import React, { useState, useEffect } from 'react';
+import { Package, ClipboardList, Tag, TrendingUp, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useLanguage, formatNumber } from '../../context/LanguageContext';
 import { OrderAnalyticsProps } from './types';
 
 const OrderAnalytics: React.FC<OrderAnalyticsProps> = ({
@@ -8,62 +8,92 @@ const OrderAnalytics: React.FC<OrderAnalyticsProps> = ({
   totalOrders,
   totalRevenue,
   lowStockProducts,
-  toBeReviewed
+  toBeReviewed,
+  reservedPrice = 0,
+  notifications = []
 }) => {
   const { language, setLanguage: setLang, t } = useLanguage();
+  const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   
   // Get current day info
-  const currentDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
-  const currentDate = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+  const now = new Date();
+  const currentDay = now.toLocaleDateString('en-US', { weekday: 'short' });
+  const currentDate = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
+
+  // Default notifications if none provided
+  const displayNotifications = notifications.length > 0 ? notifications : [
+    { id: '1', image: '/placeholder-notification.jpg', title: 'গ্রিপ দিল পাতা' }
+  ];
+
+  // Auto-rotate notifications
+  useEffect(() => {
+    if (displayNotifications.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentNotificationIndex(prev => (prev + 1) % displayNotifications.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [displayNotifications.length]);
+
+  const StatCard = ({ 
+    value, 
+    label, 
+    icon: Icon, 
+    className = '' 
+  }: { 
+    value: number | string; 
+    label: string; 
+    icon: React.ElementType; 
+    className?: string;
+  }) => (
+    <div className={`bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow ${className}`}>
+      <div>
+        <div className="text-2xl sm:text-3xl font-bold text-slate-900">
+          {typeof value === 'number' ? formatNumber(value, language) : value}
+        </div>
+        <div className="text-sm text-slate-500 mt-1">{label}</div>
+      </div>
+      <div className="p-2">
+        <Icon className="w-6 h-6 text-slate-400" strokeWidth={1.5} />
+      </div>
+    </div>
+  );
 
   return (
     <div className="w-full">
-      <div className="text-base sm:text-lg font-bold text-slate-900 mb-3">
-        Order Analytics
+      {/* Section Title with blue left border */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
+        <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+          Order Analytics
+        </h2>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {/* Row 1: 5 cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
         {/* Products on Hands */}
-        <div className="group bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-blue-500/20 hover:border-blue-200 transition-all cursor-pointer">
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-1.5 bg-blue-50 rounded-lg group-hover:scale-110 transition-transform">
-              <Package className="w-4 h-4 text-blue-500" />
-            </div>
-          </div>
-          <div className="text-xs text-slate-400 font-medium mb-1">
-            {t('products_on_hand')}
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900">
-            {formatNumber(totalProducts, language)}
-          </div>
-        </div>
+        <StatCard 
+          value={totalProducts} 
+          label={t('products_on_hand') || 'Products on Hands'} 
+          icon={Package} 
+        />
 
         {/* Total Orders */}
-        <div className="group bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-indigo-500/20 hover:border-indigo-200 transition-all cursor-pointer">
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-1.5 bg-indigo-50 rounded-lg group-hover:scale-110 transition-transform">
-              <ShoppingCart className="w-4 h-4 text-indigo-500" />
-            </div>
-          </div>
-          <div className="text-xs text-slate-400 font-medium mb-1">
-            {t('total_orders')}
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900">
-            {formatNumber(totalOrders, language)}
-          </div>
-        </div>
+        <StatCard 
+          value={totalOrders} 
+          label={t('total_orders') || 'Total Orders'} 
+          icon={ClipboardList} 
+        />
 
-        {/* Language */}
-        <div className="group bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-slate-500/20 hover:border-slate-200 transition-all">
-          <div className="text-xs text-slate-400 font-medium mb-1.5">
-            {t('language')}
-          </div>
-          <div className="flex items-center gap-1.5">
+        {/* Language Switcher */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
+          <div className="text-sm text-slate-500 mb-2">{t('language') || 'Language'}</div>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setLang('en')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 language === 'en' 
-                  ? 'bg-blue-500 text-white' 
+                  ? 'bg-blue-500 text-white shadow-sm' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -71,9 +101,9 @@ const OrderAnalytics: React.FC<OrderAnalyticsProps> = ({
             </button>
             <button
               onClick={() => setLang('bn')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 language === 'bn' 
-                  ? 'bg-blue-500 text-white' 
+                  ? 'bg-blue-500 text-white shadow-sm' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -82,60 +112,71 @@ const OrderAnalytics: React.FC<OrderAnalyticsProps> = ({
           </div>
         </div>
 
-        {/* Date */}
-        <div className="group bg-gradient-to-br from-blue-500 to-indigo-600 border border-blue-400 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-blue-500/30 transition-all cursor-pointer">
-          <div className="text-xs text-blue-100 font-medium mb-1.5">
-            {currentDate}
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-white">
-            {currentDay}
-          </div>
+        {/* Calendar/Date */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white hover:shadow-md hover:shadow-blue-500/30 transition-shadow">
+          <div className="text-sm text-blue-100 mb-1">{currentDate}</div>
+          <div className="text-2xl sm:text-3xl font-bold">{currentDay}</div>
         </div>
 
-        {/* Revenue */}
-        <div className="group bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-amber-500/20 hover:border-amber-200 transition-all cursor-pointer">
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-1.5 bg-amber-50 rounded-lg group-hover:scale-110 transition-transform">
-              <DollarSign className="w-4 h-4 text-amber-500" />
-            </div>
-          </div>
-          <div className="text-xs text-slate-400 font-medium mb-1">
-            {t('revenue')}
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900">
-            {formatCurrency(totalRevenue, language)}
+        {/* Important Notification */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow col-span-2 sm:col-span-1">
+          <div className="text-sm text-slate-500 mb-2">Important Notification</div>
+          <div className="relative">
+            {displayNotifications.length > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="w-16 h-12 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+                  {displayNotifications[currentNotificationIndex]?.image && (
+                    <img 
+                      src={displayNotifications[currentNotificationIndex].image} 
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                </div>
+                <div className="text-xs text-slate-700 line-clamp-2">
+                  {displayNotifications[currentNotificationIndex]?.title}
+                </div>
+              </div>
+            )}
+            {displayNotifications.length > 1 && (
+              <div className="flex justify-center gap-1 mt-2">
+                {displayNotifications.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      idx === currentNotificationIndex ? 'bg-blue-500' : 'bg-slate-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Row 2: 3 cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {/* Reserved Price */}
+        <StatCard 
+          value={reservedPrice || totalRevenue} 
+          label={t('reserved_price') || 'Reserved Price'} 
+          icon={Tag} 
+        />
 
         {/* Low Stock */}
-        <div className="group bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-red-500/20 hover:border-red-200 transition-all cursor-pointer">
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-1.5 bg-red-50 rounded-lg group-hover:scale-110 transition-transform">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-            </div>
-          </div>
-          <div className="text-xs text-slate-400 font-medium mb-1">
-            {t('low_stock')}
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900">
-            {formatNumber(lowStockProducts, language)}
-          </div>
-        </div>
+        <StatCard 
+          value={lowStockProducts} 
+          label={t('low_stock') || 'Low Stock'} 
+          icon={TrendingUp} 
+        />
 
         {/* To be Reviewed */}
-        <div className="group bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-lg hover:shadow-emerald-500/20 hover:border-emerald-200 transition-all cursor-pointer">
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-1.5 bg-emerald-50 rounded-lg group-hover:scale-110 transition-transform">
-              <FileCheck className="w-4 h-4 text-emerald-500" />
-            </div>
-          </div>
-          <div className="text-xs text-slate-400 font-medium mb-1">
-            To be Reviewed
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900">
-            {toBeReviewed}
-          </div>
-        </div>
+        <StatCard 
+          value={toBeReviewed} 
+          label={t('to_be_reviewed') || 'To be Reviewed'} 
+          icon={MessageSquare} 
+        />
       </div>
     </div>
   );
